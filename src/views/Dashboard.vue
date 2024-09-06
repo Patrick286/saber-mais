@@ -168,7 +168,7 @@ export default {
           const randomIndex = Math.floor(Math.random() * availableFlashcards.length);
           this.flashcards.push(availableFlashcards[randomIndex]);
         }
-      }, 60000); // 1 minuto
+      }, 90000); // 1 minuto
     },
     
     getAvailableFlashcards() {
@@ -303,7 +303,7 @@ export default {
       }
     },
     fetchQuestions() {
-      axios.get('http://localhost:8080/api/questions') // Faz a requisição GET para o endpoint
+      axios.get('http://3.19.57.204/api/questions') // Faz a requisição GET para o endpoint
         .then(response => {
           this.questionsFromAPI = response.data; // Armazena as questões no estado
         })
@@ -312,7 +312,7 @@ export default {
         });
     },
     fetchFlashcards() {
-      axios.get('http://localhost:8080/api/flashcards') // Faz a requisição GET para o endpoint
+      axios.get('http://3.19.57.204/api/flashcards') // Faz a requisição GET para o endpoint
         .then(response => {
           if (Array.isArray(response.data)) { // Verifique se a resposta é um array
             this.flashcards = response.data; // Armazena as questões de flashcard no estado
