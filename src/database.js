@@ -1,31 +1,23 @@
 // src/database.js
 export const infoUsers = [
-    {
-      email: 'patrickmiguel286@gmail.com',
-      nome: 'Patrick Miguel Silva de Jesus Santos',
-      date: '07/07/1999',
-      college: 'Unijorge',
-      course: 'Engenharia da computação',
-      password: 'p01016161',
-      simuladosRealizados: '0',
-      flashcardsRealizados: '0',
-      questoesFeitas: '0',
-      respostasCorretas: '0',
-      respostasIncorretas: '0',
-    },
-    {
-      email: 'ronaldvieira286@gmail.com',
-      nome: 'Ronald Vieira de Jesus',
-      date: '23/03/2001',
-      college: 'Unijorge',
-      course: 'Engenharia da computação',
-      password: '12345678',
-      simuladosRealizados: '0',
-      flashcardsRealizados: '0',
-      questoesFeitas: '0',
-      respostasCorretas: '0',
-      respostasIncorretas: '0',
-    },
+  {
+    email: 'patrickmiguel286@gmail.com',
+    nome: 'Patrick Miguel Silva de Jesus Santos',
+    date: '07/07/1999',
+    college: 'Unijorge',
+    course: 'Engenharia da computação',
+    password: 'p01016161',
+    simuladosUmRealizado: true,
+    respostasSimuladoUmCorretas: 11,
+    respostasSimuladoUmIncorretas: 10,
+    simuladosDoisRealizado: false,
+    respostasSimuladoDoisCorretas: 0,
+    respostasSimuladoDoisIncorretas: 0,
+    flashcardsRealizados: 0,
+    flashcardLembrei: 0,
+    flashcardQuaseNaoLembrei: 0,
+    flashcardNaoLembrei: 0,
+  }
   ];
 
   export function findUserByEmail(email) {

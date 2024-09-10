@@ -7,7 +7,7 @@
           <input type="email" v-model="email" placeholder="Email" required />
         </div>
         <div class="textbox">
-          <input type="password" v-model="password" placeholder="Senha" required />
+          <input type="password" v-model="senha" placeholder="Senha" required />
         </div>
         <button type="submit" class="btn btn-login">Entrar</button>
         <router-link to="/register" class="btn btn-register">Registrar</router-link>
@@ -17,26 +17,38 @@
 </template>
 
 <script>
-import { findUserByEmail } from '../database.js';
+import axios from 'axios';
 
 export default {
   name: 'LoginPage',
   data() {
     return {
       email: '',
-      password: '',
+      senha: '',
     };
   },
   methods: {
-    handleLogin() {
-  const user = findUserByEmail(this.email);
-  if (user && user.password === this.password) {
-    localStorage.setItem('user', JSON.stringify(user)); // Salva o usuário na sessão
-    this.$router.push('/dashboard');
-  } else {
-    alert('Credenciais inválidas');
-  }
-}
+    async handleLogin() {
+      try {
+        const response = await axios.post('http://localhost:8080/api/login', {
+          email: this.email,
+          senha: this.senha,
+        });
+
+        if (response.data && response.data.success) {
+          const user = response.data.user; // Assumindo que a API retorna o usuário e um campo de sucesso
+          localStorage.setItem('user', JSON.stringify(user)); // Armazena o usuário no localStorage
+          localStorage.setItem('email', this.email); // Armazena o email no localStorage
+          console.log('Email armazenado no localStorage:', localStorage.getItem('email'));
+          this.$router.push('/dashboard'); // Redireciona para o dashboard
+        } else {
+          alert('Credenciais inválidas');
+        }
+      } catch (error) {
+        console.error('Erro ao tentar login:', error);
+        alert('Erro ao conectar ao servidor');
+      }
+    },
   },
 };
 </script>

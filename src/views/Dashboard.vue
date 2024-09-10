@@ -89,23 +89,27 @@
     </div>
 
     <!-- Pop-up de Atividades -->
-    <div v-if="showAtividades" class="atividades-popup">
-      <div class="atividades-content">
-        <h2>Suas Atividades</h2>
-        <p>Simulados Realizados: {{ userActivities.simuladosRealizados }}</p>
-        <p>Flashcards Realizados: {{ userActivities.flashcardsRealizados }}</p>
-        <p>Questões Feitas: {{ userActivities.questoesFeitas }}</p>
-        <p>Respostas Corretas: {{ userActivities.respostasCorretas }}</p>
-        <p>Respostas Incorretas: {{ userActivities.respostasIncorretas }}</p>
-        <button @click="toggleAtividadesPopup" class="btn btn-close">Fechar</button>
-      </div>
-    </div>
+<div v-if="showAtividades" class="atividades-popup">
+  <div class="atividades-content">
+    <h2>Suas Atividades</h2>
+    <p>Simulado 1 Realizado: {{ userActivities.simuladosUmRealizado ? 'Sim' : 'Não' }}</p>
+    <p>Respostas Corretas Simulado 1: {{ userActivities.respostasSimuladoUmCorretas }}</p>
+    <p>Respostas Incorretas Simulado 1: {{ userActivities.respostasSimuladoUmIncorretas }}</p>
+    <p>Simulado 2 Realizado: {{ userActivities.simuladosDoisRealizado ? 'Sim' : 'Não' }}</p>
+    <p>Respostas Corretas Simulado 2: {{ userActivities.respostasSimuladoDoisCorretas }}</p>
+    <p>Respostas Incorretas Simulado 2: {{ userActivities.respostasSimuladoDoisIncorretas }}</p>
+    <p>Flashcards Realizados: {{ userActivities.flashcardsRealizados }}</p>
+    <p>Flashcards - Lembrei: {{ userActivities.flashcardLembrei }}</p>
+    <p>Flashcards - Quase Não Lembrei: {{ userActivities.flashcardQuaseNaoLembrei }}</p>
+    <p>Flashcards - Não Lembrei: {{ userActivities.flashcardNaoLembrei }}</p>
+    <button @click="toggleAtividadesPopup" class="btn btn-close">Fechar</button>
+  </div>
+</div>
   </div>
 </template>
 
 <script>
 import axios from 'axios'; // Importa o axios
-import { findUserByEmail } from '../database.js';
 
 export default {
   name: 'UserDashboard',
@@ -124,12 +128,17 @@ export default {
       correctAnswers: 0,
       wrongAnswers: 0,
       userActivities: {
-        simuladosRealizados: 0,
+        simuladosUmRealizado: 0,
+        respostasSimuladoUmCorretas: 0,
+        respostasSimuladoUmIncorretas: 0,
+        simuladosDoisRealizado: 0,
+        respostasSimuladoDoisCorretas: 0,
+        respostasSimuladoDoisIncorretas: 0,
         flashcardsRealizados: 0,
-        questoesFeitas: 0,
-        respostasCorretas: 0,
-        respostasIncorretas: 0,
-      },
+        flashcardLembrei: 0,
+        flashcardQuaseNaoLembrei: 0,
+        flashcardNaoLembrei: 0,
+    },
       flashcards: [],
       currentFlashcard: null,
       showBack: false,
@@ -198,8 +207,29 @@ export default {
     },
 
     showFlashcard(index) {
-      this.currentFlashcard = index;
-      this.showBack = false;
+      const userEmail = localStorage.getItem('email'); // Pegue o email do localStorage
+      if (userEmail) {
+        // Requisição GET para pegar os dados do flashcard do usuário
+        axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`)
+          .then((response) => {
+            console.log('Dados do flashcard:', response.data);
+            const { flashcardLembrei, flashcardQuaseNaoLembrei, flashcardNaoLembrei } = response.data;
+            
+            // Armazene os valores no localStorage
+            localStorage.setItem('flashcardLembrei', flashcardLembrei);
+            localStorage.setItem('flashcardQuaseNaoLembrei', flashcardQuaseNaoLembrei);
+            localStorage.setItem('flashcardNaoLembrei', flashcardNaoLembrei);
+            
+            // Mostre o flashcard
+            this.currentFlashcard = index;
+            this.showBack = false;
+          })
+          .catch((error) => {
+            console.error('Erro ao buscar dados do flashcard:', error);
+          });
+      } else {
+        console.error('Nenhum email de usuário encontrado no localStorage');
+      }
     },
 
     flipCard() {
@@ -207,18 +237,40 @@ export default {
     },
 
     handleRemember(rememberType) {
-      let cooldown = 0;
-      if (rememberType === 'Lembrei') {
-        cooldown = 5;
-      } else if (rememberType === 'Quase não lembrei') {
-        cooldown = 3;
-      } else if (rememberType === 'Não lembrei') {
-        cooldown = 1;
+      const userEmail = localStorage.getItem('email');
+      let key = '';
+      let value = parseInt(localStorage.getItem(`flashcard${rememberType.charAt(0).toUpperCase() + rememberType.slice(1)}`)) + 1;
+
+      if (rememberType === 'lembrei') {
+        key = 'flashcardLembrei';
+      } else if (rememberType === 'quase') {
+        key = 'flashcardQuaseNaoLembrei';
+      } else if (rememberType === 'nao') {
+        key = 'flashcardNaoLembrei';
       }
 
-      this.flashcardCooldowns[this.currentFlashcard] = cooldown;
-      this.flashcards.splice(this.currentFlashcard, 1); // Remove o flashcard atual
-      this.currentFlashcard = null; // Fecha o pop-up
+      value = parseInt(localStorage.getItem(key)) || 0;
+      value += 1;
+
+      if (userEmail && key) {
+        // Requisição PUT para atualizar o campo correspondente no banco de dados
+        axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
+          chave: key,
+          valor: value.toString(), // Incrementa o valor
+        })
+        .then(() => {
+          // Atualize o localStorage com o novo valor
+          localStorage.setItem(key, value);
+
+          // Gerencia o cooldown do flashcard e remove o flashcard atual
+          this.flashcardCooldowns[this.currentFlashcard] = rememberType === 'lembrei' ? 5 : rememberType === 'quase' ? 3 : 1;
+          this.flashcards.splice(this.currentFlashcard, 1);
+          this.currentFlashcard = null;
+        })
+        .catch((error) => {
+          console.error('Erro ao atualizar o flashcard:', error);
+        });
+      }
     },
     handleLogout() {
       localStorage.removeItem('user'); // Limpa a sessão do usuário
@@ -286,24 +338,44 @@ export default {
     },
     toggleAtividadesPopup() {
       this.showAtividades = !this.showAtividades;
+      if (this.showAtividades) {
+      this.loadUserActivities();
+    }
     },
     loadUserActivities() {
-      const userEmail = localStorage.getItem('user');
-      if (userEmail) {
-        const user = findUserByEmail(userEmail);
+  const userEmail = localStorage.getItem('email'); // Pegue o email do localStorage
+  if (userEmail) {
+    axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`) // Faz a requisição GET para buscar as atividades do usuário
+      .then((response) => {
+        console.log('Resposta da API:', response.data);
+        const user = response.data;
         if (user) {
+          // Atualizando as atividades do usuário no estado do componente
           this.userActivities = {
-            simuladosRealizados: user.simuladosRealizados,
+            simuladosUmRealizado: user.simuladosUmRealizado,
+            respostasSimuladoUmCorretas: user.respostasSimuladoUmCorretas,
+            respostasSimuladoUmIncorretas: user.respostasSimuladoUmIncorretas,
+            simuladosDoisRealizado: user.simuladosDoisRealizado,
+            respostasSimuladoDoisCorretas: user.respostasSimuladoDoisCorretas,
+            respostasSimuladoDoisIncorretas: user.respostasSimuladoDoisIncorretas,
             flashcardsRealizados: user.flashcardsRealizados,
-            questoesFeitas: user.questoesFeitas,
-            respostasCorretas: user.respostasCorretas,
-            respostasIncorretas: user.respostasIncorretas,
+            flashcardLembrei: user.flashcardLembrei,
+            flashcardQuaseNaoLembrei: user.flashcardQuaseNaoLembrei,
+            flashcardNaoLembrei: user.flashcardNaoLembrei,
           };
+        } else {
+          console.error('Usuário não encontrado na API');
         }
-      }
-    },
+      })
+      .catch((error) => {
+        console.error('Erro ao buscar atividades do usuário:', error);
+      });
+  } else {
+    console.error('Nenhum email de usuário encontrado no localStorage');
+  }
+},
     fetchQuestions() {
-      axios.get('http://3.19.57.204/api/questions') // Faz a requisição GET para o endpoint
+      axios.get('http://localhost:8080/api/questions') // Faz a requisição GET para o endpoint
         .then(response => {
           this.questionsFromAPI = response.data; // Armazena as questões no estado
         })
@@ -312,7 +384,7 @@ export default {
         });
     },
     fetchFlashcards() {
-      axios.get('http://3.19.57.204/api/flashcards') // Faz a requisição GET para o endpoint
+      axios.get('http://localhost:8080/api/flashcards') // Faz a requisição GET para o endpoint
         .then(response => {
           if (Array.isArray(response.data)) { // Verifique se a resposta é um array
             this.flashcards = response.data; // Armazena as questões de flashcard no estado
