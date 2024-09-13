@@ -28,7 +28,8 @@
       <section class="features">
         <div class="feature-box">
           <h3>Simulado</h3>
-          <button class="btn-start-simulado" @click="startSimulado">Iniciar Novo Simulado</button>
+          <button class="btn-start-simulado" @click="startSimuladoUm">Iniciar 1º Simulado</button>
+          <button class="btn-start-simulado" @click="startSimuladoDois" :disabled="!userActivities.simuladosUmRealizado">Iniciar 2º Simulado</button>
         </div>
         <div class="feature-box flashcards-box">
           <h3>Flashcards</h3>
@@ -145,6 +146,7 @@ export default {
       flashcardCooldowns: {},
       questionsFromAPI: [], // Armazena as questões vindas da API
       flashcardsFromAPI: [],
+      currentSimulado: null,
     };
   },
   computed: {
@@ -165,9 +167,30 @@ export default {
 
   mounted() {
     this.startFlashcardInterval();
+    this.checkSimuladoStatus();
   },
 
   methods: {
+    checkSimuladoStatus() {
+      const userEmail = localStorage.getItem('email'); // Obtém o email do usuário
+      if (userEmail) {
+        axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`)
+          .then((response) => {
+            const { simuladosUmRealizado } = response.data;
+            this.userActivities.simuladosUmRealizado = simuladosUmRealizado;
+            
+            // Somente inicia os flashcards se o simulado 1 tiver sido realizado
+            if (simuladosUmRealizado === 1) {
+              this.startFlashcardInterval();
+            } else{
+              this.flashcards = [];
+            }
+          })
+          .catch((error) => {
+            console.error('Erro ao buscar status do simulado:', error);
+          });
+      }
+    },
     startFlashcardInterval() {
       setInterval(() => {
         this.updateCooldowns();
@@ -177,7 +200,7 @@ export default {
           const randomIndex = Math.floor(Math.random() * availableFlashcards.length);
           this.flashcards.push(availableFlashcards[randomIndex]);
         }
-      }, 90000); // 1 minuto
+      }, 60000); // 1 minuto
     },
     
     getAvailableFlashcards() {
@@ -207,30 +230,35 @@ export default {
     },
 
     showFlashcard(index) {
-      const userEmail = localStorage.getItem('email'); // Pegue o email do localStorage
-      if (userEmail) {
-        // Requisição GET para pegar os dados do flashcard do usuário
-        axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`)
-          .then((response) => {
-            console.log('Dados do flashcard:', response.data);
-            const { flashcardLembrei, flashcardQuaseNaoLembrei, flashcardNaoLembrei } = response.data;
-            
-            // Armazene os valores no localStorage
-            localStorage.setItem('flashcardLembrei', flashcardLembrei);
-            localStorage.setItem('flashcardQuaseNaoLembrei', flashcardQuaseNaoLembrei);
-            localStorage.setItem('flashcardNaoLembrei', flashcardNaoLembrei);
-            
-            // Mostre o flashcard
-            this.currentFlashcard = index;
-            this.showBack = false;
-          })
-          .catch((error) => {
-            console.error('Erro ao buscar dados do flashcard:', error);
-          });
-      } else {
-        console.error('Nenhum email de usuário encontrado no localStorage');
-      }
-    },
+  const userEmail = localStorage.getItem('email'); // Pegue o email do localStorage
+  if (userEmail) {
+    // Verifique se o 1º Simulado foi realizado
+    if (this.userActivities.simuladosUmRealizado === 1) {
+      // Requisição GET para pegar os dados do flashcard do usuário
+      axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`)
+        .then((response) => {
+          console.log('Dados do flashcard:', response.data);
+          const { flashcardLembrei, flashcardQuaseNaoLembrei, flashcardNaoLembrei } = response.data;
+          
+          // Armazene os valores no localStorage
+          localStorage.setItem('flashcardLembrei', flashcardLembrei);
+          localStorage.setItem('flashcardQuaseNaoLembrei', flashcardQuaseNaoLembrei);
+          localStorage.setItem('flashcardNaoLembrei', flashcardNaoLembrei);
+          
+          // Mostre o flashcard
+          this.currentFlashcard = index;
+          this.showBack = false;
+        })
+        .catch((error) => {
+          console.error('Erro ao buscar dados do flashcard:', error);
+        });
+    } else {
+      alert("Você precisa realizar o 1º Simulado antes de ver os flashcards.");
+    }
+  } else {
+    console.error('Nenhum email de usuário encontrado no localStorage');
+  }
+},
 
     flipCard() {
       this.showBack = !this.showBack;
@@ -282,7 +310,20 @@ export default {
         this.handleLogout();
       }, this.inactivityTimeout);
     },
-    startSimulado() {
+    async startSimuladoUm() {
+    const userEmail = localStorage.getItem('email');
+
+    try {
+      const response = await axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`);
+      const userData = response.data;
+
+      // Armazenando os dados do 1º Simulado
+      localStorage.setItem('simuladosUmRealizado', userData.simuladosUmRealizado);
+      localStorage.setItem('respostasSimuladoUmCorretas', userData.respostasSimuladoUmCorretas);
+      localStorage.setItem('respostasSimuladoUmIncorretas', userData.respostasSimuladoUmIncorretas);
+
+      this.currentSimulado = 1;
+
       this.showSimulado = true;
       this.showSummary = false;
       this.currentQuestionIndex = 0;
@@ -291,7 +332,36 @@ export default {
       this.correctAnswers = 0;
       this.wrongAnswers = 0;
       this.loadNextQuestion();
-    },
+    } catch (error) {
+      console.error('Erro ao buscar os dados do usuário:', error);
+    }
+  },
+  async startSimuladoDois() {
+    const userEmail = localStorage.getItem('email');
+
+    try {
+      const response = await axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`);
+      const userData = response.data;
+
+      // Armazenando os dados do 2º Simulado
+      localStorage.setItem('simuladosDoisRealizado', userData.simuladosDoisRealizado);
+      localStorage.setItem('respostasSimuladoDoisCorretas', userData.respostasSimuladoDoisCorretas);
+      localStorage.setItem('respostasSimuladoDoisIncorretas', userData.respostasSimuladoDoisIncorretas);
+
+      this.currentSimulado = 2;
+
+      this.showSimulado = true;
+      this.showSummary = false;
+      this.currentQuestionIndex = 0;
+      this.userAnswers = [];
+      this.totalQuestions = 0;
+      this.correctAnswers = 0;
+      this.wrongAnswers = 0;
+      this.loadNextQuestion();
+    } catch (error) {
+      console.error('Erro ao buscar os dados do usuário:', error);
+    }
+  },
     loadNextQuestion() {
       if (this.currentQuestionIndex < this.questionsFromAPI.length) {
         this.currentQuestion = this.questionsFromAPI[this.currentQuestionIndex];
@@ -320,7 +390,66 @@ export default {
       this.currentQuestionIndex++;
       this.loadNextQuestion();
     },
-    endSimulado() {
+    async endSimulado() {
+      // Calcula questões corretas e erradas
+      this.correctAnswers = this.userAnswers.filter(answer => answer.correct).length;
+      this.wrongAnswers = this.userAnswers.length - this.correctAnswers;
+
+      // Atualiza os valores das respostas corretas e incorretas
+      this.userActivities.respostasSimuladoUmCorretas = this.correctAnswers;
+      this.userActivities.respostasSimuladoUmIncorretas = this.wrongAnswers;
+
+      // Atualiza simuladosUmRealizado para 1 (indica que o simulado foi feito)
+      this.userActivities.simuladosUmRealizado = 1;
+
+      const userEmail = localStorage.getItem('email');
+
+      // Fazendo uma requisição PUT para atualizar os dados do usuário
+      try {
+        if (this.currentSimulado === 1) {
+        // Atualiza simuladosUmRealizado
+        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
+          chave: 'simuladosUmRealizado',
+          valor: '1',
+        });
+
+        // Atualiza respostasSimuladoUmCorretas
+        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
+          chave: 'respostasSimuladoUmCorretas',
+          valor: this.correctAnswers.toString(),
+        });
+
+        // Atualiza respostasSimuladoUmIncorretas
+        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
+          chave: 'respostasSimuladoUmIncorretas',
+          valor: this.wrongAnswers.toString(),
+        });
+      } else if (this.currentSimulado === 2) {
+        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
+          chave: 'simuladosDoisRealizado',
+          valor: '1',
+        });
+
+        // Atualiza respostasSimuladoUmCorretas
+        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
+          chave: 'respostasSimuladoDoisCorretas',
+          valor: this.correctAnswers.toString(),
+        });
+
+        // Atualiza respostasSimuladoUmIncorretas
+        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
+          chave: 'respostasSimuladoDoisIncorretas',
+          valor: this.wrongAnswers.toString(),
+        });
+      }
+
+        console.log('Dados do simulado atualizados com sucesso!');
+
+      } catch (error) {
+        console.error('Erro ao atualizar os dados do simulado:', error);
+      }
+
+      // Exibe o resumo do simulado
       this.showSimulado = false;
       this.showSummary = true;
       console.log('Respostas:', this.userAnswers);
