@@ -28,8 +28,18 @@
       <section class="features">
         <div class="feature-box">
           <h3>Simulado</h3>
-          <button class="btn-start-simulado" @click="startSimuladoUm">Iniciar 1º Simulado</button>
-          <button class="btn-start-simulado" @click="startSimuladoDois" :disabled="!userActivities.simuladosUmRealizado">Iniciar 2º Simulado</button>
+          <button 
+          class="btn-start-simulado" 
+          @click="startSimuladoUm" 
+          :disabled="userActivities.simuladosUmRealizado === 1">
+          Iniciar 1º Simulado
+        </button>
+        <button 
+          class="btn-start-simulado" 
+          @click="startSimuladoDois" 
+          :disabled="userActivities.simuladosUmRealizado === 0 || userActivities.simuladosDoisRealizado === 1">
+          Iniciar 2º Simulado
+        </button>
         </div>
         <div class="feature-box flashcards-box">
           <h3>Flashcards</h3>
@@ -45,13 +55,13 @@
     <div v-if="currentFlashcard !== null" class="flashcard-popup">
       <div v-if="!showBack">
         <div class="flashcard-front">
-          <p>{{ flashcards[currentFlashcard].enunciado }}</p>
+          <p>{{ currentFlashcard.enunciado }}</p>
           <button @click="flipCard">Girar</button>
         </div>
       </div>
       <div v-else>
         <div class="flashcard-back">
-          <p>{{ flashcards[currentFlashcard].resposta }}</p>
+          <p>{{ currentFlashcard.resposta }}</p>
           <button @click="handleRemember('nao')">Não lembrei</button>
           <button @click="handleRemember('quase')">Quase não lembrei</button>
           <button @click="handleRemember('lembrei')">Lembrei</button>
@@ -166,11 +176,17 @@ export default {
   },
 
   mounted() {
-    this.startFlashcardInterval();
     this.checkSimuladoStatus();
+    this.carregarFlashcards();
   },
 
   methods: {
+    carregarFlashcards() {
+      // Exemplo: Pega flashcards do localStorage (deve ser um array de objetos)
+      const flashcards = JSON.parse(localStorage.getItem('flashcards') || '[]');
+      console.log('Teste:', JSON.parse(localStorage.getItem('flashcards')));
+      this.flashcards = flashcards;
+    },
     checkSimuladoStatus() {
       const userEmail = localStorage.getItem('email'); // Obtém o email do usuário
       if (userEmail) {
@@ -200,7 +216,7 @@ export default {
           const randomIndex = Math.floor(Math.random() * availableFlashcards.length);
           this.flashcards.push(availableFlashcards[randomIndex]);
         }
-      }, 60000); // 1 minuto
+      }, 6000); // 1 minuto
     },
     
     getAvailableFlashcards() {
@@ -230,23 +246,20 @@ export default {
     },
 
     showFlashcard(index) {
-  const userEmail = localStorage.getItem('email'); // Pegue o email do localStorage
+  const userEmail = localStorage.getItem('email'); // Pega o email do localStorage
+  const flashcardId = this.flashcards[index].id; // Pega o ID do flashcard selecionado
+
   if (userEmail) {
     // Verifique se o 1º Simulado foi realizado
     if (this.userActivities.simuladosUmRealizado === 1) {
-      // Requisição GET para pegar os dados do flashcard do usuário
-      axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`)
+      // Requisição GET para pegar os dados do flashcard pelo ID
+      axios.get(`http://localhost:8080/api/flashcards/?id=${flashcardId}`)
         .then((response) => {
-          console.log('Dados do flashcard:', response.data);
-          const { flashcardLembrei, flashcardQuaseNaoLembrei, flashcardNaoLembrei } = response.data;
-          
-          // Armazene os valores no localStorage
-          localStorage.setItem('flashcardLembrei', flashcardLembrei);
-          localStorage.setItem('flashcardQuaseNaoLembrei', flashcardQuaseNaoLembrei);
-          localStorage.setItem('flashcardNaoLembrei', flashcardNaoLembrei);
-          
-          // Mostre o flashcard
-          this.currentFlashcard = index;
+          const { enunciado, resposta } = response.data;
+
+          // Atualiza o flashcard atual com os dados recebidos
+          this.currentFlashcard = { enunciado, resposta };
+
           this.showBack = false;
         })
         .catch((error) => {
@@ -456,7 +469,8 @@ export default {
     },
     desistirSimulado() {
       if (confirm('Tem certeza de que deseja desistir do simulado?')) {
-        this.endSimulado();
+        this.showSimulado = false;
+        this.showSummary = false;
       }
     },
     closeSummary() {
@@ -512,18 +526,19 @@ export default {
           console.error('Erro ao buscar questões:', error);
         });
     },
-    fetchFlashcards() {
-      axios.get('http://localhost:8080/api/flashcards') // Faz a requisição GET para o endpoint
-        .then(response => {
-          if (Array.isArray(response.data)) { // Verifique se a resposta é um array
-            this.flashcards = response.data; // Armazena as questões de flashcard no estado
-          } else {
-            console.error('A resposta da API não é um array:', response.data);
-          }
-        })
-        .catch(error => {
-          console.error('Erro ao buscar flashcards:', error);
+    async fetchFlashcards() {
+      try {
+        const response = await axios.get('http://localhost:8080/api/flashcards');
+        const flashcards = response.data.map(flashcard => {
+          return {
+            id: flashcard.id
+          };
         });
+        localStorage.setItem('flashcards', JSON.stringify(flashcards));
+        console.log('Flashcards armazenados no localStorage:', JSON.parse(localStorage.getItem('flashcards')));
+      } catch (error) {
+        console.error('Erro ao buscar flashcards:', error);
+      }
     },
   },
   created() {
