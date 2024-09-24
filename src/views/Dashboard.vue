@@ -182,11 +182,15 @@ export default {
 
   methods: {
     carregarFlashcards() {
-      // Exemplo: Pega flashcards do localStorage (deve ser um array de objetos)
-      const flashcards = JSON.parse(localStorage.getItem('flashcards') || '[]');
-      console.log('Teste:', JSON.parse(localStorage.getItem('flashcards')));
-      this.flashcards = flashcards;
-    },
+  axios.get('http://localhost:8080/api/flashcards')
+    .then(response => {
+      this.flashcardsFromAPI = response.data; // Armazena todos os flashcards recebidos da API
+      console.log('Flashcards carregados do banco de dados:', this.flashcardsFromAPI);
+    })
+    .catch(error => {
+      console.error('Erro ao carregar flashcards:', error);
+    });
+},
     checkSimuladoStatus() {
       const userEmail = localStorage.getItem('email'); // Obtém o email do usuário
       if (userEmail) {
@@ -208,15 +212,22 @@ export default {
       }
     },
     startFlashcardInterval() {
-      setInterval(() => {
-        this.updateCooldowns();
-        const availableFlashcards = this.getAvailableFlashcards();
+      let currentIndex = 0;
 
-        if (availableFlashcards.length > 0) {
-          const randomIndex = Math.floor(Math.random() * availableFlashcards.length);
-          this.flashcards.push(availableFlashcards[randomIndex]);
-        }
-      }, 6000); // 1 minuto
+  setInterval(() => {
+    // Verifica se já carregamos todos os flashcards do banco de dados
+    if (currentIndex >= this.flashcardsFromAPI.length) {
+      console.log('Todos os flashcards foram carregados');
+      return; // Se todos os flashcards foram carregados, para o intervalo
+    }
+
+    // Carrega o próximo flashcard a cada 6 segundos
+    const nextFlashcard = this.flashcardsFromAPI[currentIndex];
+    this.flashcards.push(nextFlashcard);
+    currentIndex++;
+
+    console.log('Flashcard carregado:', nextFlashcard);
+  }, 10000); // 6 segundos
     },
     
     getAvailableFlashcards() {
@@ -246,13 +257,12 @@ export default {
     },
 
     showFlashcard(index) {
-  const userEmail = localStorage.getItem('email'); // Pega o email do localStorage
+  const userEmail = localStorage.getItem('email'); // Pegue o email do localStorage
   const flashcardId = this.flashcards[index].id; // Pega o ID do flashcard selecionado
-
   if (userEmail) {
     // Verifique se o 1º Simulado foi realizado
     if (this.userActivities.simuladosUmRealizado === 1) {
-      // Requisição GET para pegar os dados do flashcard pelo ID
+      // Requisição GET para pegar os dados do flashcard do usuário
       axios.get(`http://localhost:8080/api/flashcards/?id=${flashcardId}`)
         .then((response) => {
           const { enunciado, resposta } = response.data;
@@ -261,6 +271,16 @@ export default {
           this.currentFlashcard = { enunciado, resposta };
 
           this.showBack = false;
+        })
+      axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`)
+        .then((response) => {
+          console.log('Dados do flashcard:', response.data);
+          const { flashcardLembrei, flashcardQuaseNaoLembrei, flashcardNaoLembrei } = response.data;
+          
+          // Armazene os valores no localStorage
+          localStorage.setItem('flashcardLembrei', flashcardLembrei);
+          localStorage.setItem('flashcardQuaseNaoLembrei', flashcardQuaseNaoLembrei);
+          localStorage.setItem('flashcardNaoLembrei', flashcardNaoLembrei);
         })
         .catch((error) => {
           console.error('Erro ao buscar dados do flashcard:', error);
@@ -518,7 +538,7 @@ export default {
   }
 },
     fetchQuestions() {
-      axios.get('http://localhost:8080/api/questions') // Faz a requisição GET para o endpoint
+      axios.get(`http://localhost:8080/api/questions`) // Faz a requisição GET para o endpoint
         .then(response => {
           this.questionsFromAPI = response.data; // Armazena as questões no estado
         })
@@ -526,26 +546,11 @@ export default {
           console.error('Erro ao buscar questões:', error);
         });
     },
-    async fetchFlashcards() {
-      try {
-        const response = await axios.get('http://localhost:8080/api/flashcards');
-        const flashcards = response.data.map(flashcard => {
-          return {
-            id: flashcard.id
-          };
-        });
-        localStorage.setItem('flashcards', JSON.stringify(flashcards));
-        console.log('Flashcards armazenados no localStorage:', JSON.parse(localStorage.getItem('flashcards')));
-      } catch (error) {
-        console.error('Erro ao buscar flashcards:', error);
-      }
-    },
   },
   created() {
     this.resetInactivityTimer();
     this.loadUserActivities();
     this.fetchQuestions(); // Chama a função para buscar as questões do simulado
-    this.fetchFlashcards(); // Chama a função para buscar os flashcards ao criar o componente
     document.addEventListener('mousemove', this.resetInactivityTimer);
     document.addEventListener('keydown', this.resetInactivityTimer);
   },
