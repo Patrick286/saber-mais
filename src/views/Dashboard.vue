@@ -6,18 +6,8 @@
       <nav class="main-nav"></nav>
       <div class="user-info">
 
-        <!-- Widget de Notificação com ícone de sino -->
-        <div class="notification-widget">
-          <button class="btn-notification" @click="toggleNotifications">
-            <i class="fas fa-bell"></i>
-          </button>
-          <div class="notification-dropdown">
-            <p>Nenhuma notificação</p>
-          </div>
-        </div>
-
         <!-- Botão "Suas Atividades" -->
-        <button class="btn-atividades" @click="toggleAtividadesPopup">Suas Atividades</button>
+        <button class="btn-atividades" @click="toggleAtividadesPopup">Minhas atividades</button>
         <button @click="handleLogout" class="btn-logout">Sair</button>
       </div>
     </header>
@@ -63,7 +53,6 @@
         <div class="flashcard-back">
           <p>{{ currentFlashcard.resposta }}</p>
           <button @click="handleRemember('nao')">Não lembrei</button>
-          <button @click="handleRemember('quase')">Quase não lembrei</button>
           <button @click="handleRemember('lembrei')">Lembrei</button>
         </div>
       </div>
@@ -102,17 +91,16 @@
     <!-- Pop-up de Atividades -->
 <div v-if="showAtividades" class="atividades-popup">
   <div class="atividades-content">
-    <h2>Suas Atividades</h2>
-    <p>Simulado 1 Realizado: {{ userActivities.simuladosUmRealizado ? 'Sim' : 'Não' }}</p>
-    <p>Respostas Corretas Simulado 1: {{ userActivities.respostasSimuladoUmCorretas }}</p>
-    <p>Respostas Incorretas Simulado 1: {{ userActivities.respostasSimuladoUmIncorretas }}</p>
-    <p>Simulado 2 Realizado: {{ userActivities.simuladosDoisRealizado ? 'Sim' : 'Não' }}</p>
-    <p>Respostas Corretas Simulado 2: {{ userActivities.respostasSimuladoDoisCorretas }}</p>
-    <p>Respostas Incorretas Simulado 2: {{ userActivities.respostasSimuladoDoisIncorretas }}</p>
-    <p>Flashcards Realizados: {{ userActivities.flashcardsRealizados }}</p>
+    <h2>Minhas Atividades</h2>
+    <p>1º Simulado: {{ userActivities.simuladosUmRealizado ? 'Feito.' : 'Não Fez.' }}</p>
+    <p>1º Simulado - Respostas corretas: {{ userActivities.respostasSimuladoUmCorretas }}</p>
+    <p>1º Simulado - Respostas incorretas: {{ userActivities.respostasSimuladoUmIncorretas }}</p>
+    <p>2º Simulado: {{ userActivities.simuladosDoisRealizado ? 'Feito.' : 'Não fez.' }}</p>
+    <p>2º Simulado - Respostas corretas: {{ userActivities.respostasSimuladoDoisCorretas }}</p>
+    <p>2º Simulado - Respostas incorretas: {{ userActivities.respostasSimuladoDoisIncorretas }}</p>
+    <p>Flashcards: {{ userActivities.flashcardsRealizados }}</p>
     <p>Flashcards - Lembrei: {{ userActivities.flashcardLembrei }}</p>
-    <p>Flashcards - Quase Não Lembrei: {{ userActivities.flashcardQuaseNaoLembrei }}</p>
-    <p>Flashcards - Não Lembrei: {{ userActivities.flashcardNaoLembrei }}</p>
+    <p>Flashcards - Não lembrei: {{ userActivities.flashcardNaoLembrei }}</p>
     <button @click="toggleAtividadesPopup" class="btn btn-close">Fechar</button>
   </div>
 </div>
@@ -127,7 +115,6 @@ export default {
   
   data() {
     return {
-      showNotifications: false,
       inactivityTimeout: 15 * 60 * 1000, // 15 minutos de inatividade
       showSimulado: false,
       showSummary: false,
@@ -147,16 +134,17 @@ export default {
         respostasSimuladoDoisIncorretas: 0,
         flashcardsRealizados: 0,
         flashcardLembrei: 0,
-        flashcardQuaseNaoLembrei: 0,
         flashcardNaoLembrei: 0,
     },
       flashcards: [],
       currentFlashcard: null,
+      currentFlashcardIndex: null,
       showBack: false,
       flashcardCooldowns: {},
       questionsFromAPI: [], // Armazena as questões vindas da API
       flashcardsFromAPI: [],
       currentSimulado: null,
+      limiteFlashcards: 0,
     };
   },
   computed: {
@@ -178,6 +166,7 @@ export default {
   mounted() {
     this.checkSimuladoStatus();
     this.carregarFlashcards();
+    this.loadFlashcardsFromLocalStorage();
   },
 
   methods: {
@@ -186,6 +175,12 @@ export default {
     .then(response => {
       this.flashcardsFromAPI = response.data; // Armazena todos os flashcards recebidos da API
       console.log('Flashcards carregados do banco de dados:', this.flashcardsFromAPI);
+      this.limiteFlashcards = this.flashcardsFromAPI.length;
+      
+      // Se o número de flashcards carregados for maior que o limite, ajusta o array
+      if (this.flashcards.length > this.limiteFlashcards) {
+        this.flashcards = this.flashcards.slice(0, this.limiteFlashcards);
+      }
     })
     .catch(error => {
       console.error('Erro ao carregar flashcards:', error);
@@ -212,22 +207,41 @@ export default {
       }
     },
     startFlashcardInterval() {
-      let currentIndex = 0;
-
   setInterval(() => {
-    // Verifica se já carregamos todos os flashcards do banco de dados
-    if (currentIndex >= this.flashcardsFromAPI.length) {
-      console.log('Todos os flashcards foram carregados');
-      return; // Se todos os flashcards foram carregados, para o intervalo
+    // Verifica se há flashcards disponíveis
+    if (this.flashcards.length >= this.limiteFlashcards || this.flashcardsFromAPI.length === 0) {
+      console.log('Todos os flashcards foram carregados ou limite atingido');
+      return;
     }
 
-    // Carrega o próximo flashcard a cada 6 segundos
-    const nextFlashcard = this.flashcardsFromAPI[currentIndex];
+    // Seleciona um índice aleatório
+    const randomIndex = Math.floor(Math.random() * this.flashcardsFromAPI.length);
+
+    // Carrega o flashcard aleatório
+    const nextFlashcard = this.flashcardsFromAPI[randomIndex];
+    
     this.flashcards.push(nextFlashcard);
-    currentIndex++;
+    this.saveFlashcardsToLocalStorage();
+
+    // Remove o flashcard carregado para evitar repetição
+    this.flashcardsFromAPI.splice(randomIndex, 1);
 
     console.log('Flashcard carregado:', nextFlashcard);
-  }, 10000); // 6 segundos
+  }, 3000); // Intervalo de 6 segundos
+},
+
+    saveFlashcardsToLocalStorage() {
+      localStorage.setItem('flash', JSON.stringify(this.flashcards));
+      console.log('LocalStorage "flash" atualizado:', JSON.parse(localStorage.getItem('flash')));
+    },
+
+    loadFlashcardsFromLocalStorage() {
+      const storedFlashcards = localStorage.getItem('flash');
+      if (storedFlashcards) {
+        this.flashcards = JSON.parse(storedFlashcards);
+        
+      }
+      console.log('LocalStorage "flash":', JSON.parse(localStorage.getItem('flash')));
     },
     
     getAvailableFlashcards() {
@@ -270,6 +284,8 @@ export default {
           // Atualiza o flashcard atual com os dados recebidos
           this.currentFlashcard = { enunciado, resposta };
 
+          this.currentFlashcardIndex = index;
+
           this.showBack = false;
         })
       axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`)
@@ -298,41 +314,44 @@ export default {
     },
 
     handleRemember(rememberType) {
-      const userEmail = localStorage.getItem('email');
-      let key = '';
-      let value = parseInt(localStorage.getItem(`flashcard${rememberType.charAt(0).toUpperCase() + rememberType.slice(1)}`)) + 1;
+  const userEmail = localStorage.getItem('email');
+  let key = '';
+  let value = parseInt(localStorage.getItem(`flashcard${rememberType.charAt(0).toUpperCase() + rememberType.slice(1)}`)) + 1;
 
-      if (rememberType === 'lembrei') {
-        key = 'flashcardLembrei';
-      } else if (rememberType === 'quase') {
-        key = 'flashcardQuaseNaoLembrei';
-      } else if (rememberType === 'nao') {
-        key = 'flashcardNaoLembrei';
-      }
+  if (rememberType === 'lembrei') {
+    key = 'flashcardLembrei';
+  } else if (rememberType === 'nao') {
+    key = 'flashcardNaoLembrei';
+  }
 
-      value = parseInt(localStorage.getItem(key)) || 0;
-      value += 1;
+  value = parseInt(localStorage.getItem(key)) || 0;
+  value += 1;
 
-      if (userEmail && key) {
-        // Requisição PUT para atualizar o campo correspondente no banco de dados
-        axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
-          chave: key,
-          valor: value.toString(), // Incrementa o valor
-        })
-        .then(() => {
-          // Atualize o localStorage com o novo valor
-          localStorage.setItem(key, value);
+  if (userEmail && key) {
+    // Requisição PUT para atualizar o campo correspondente no banco de dados
+    axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
+      chave: key,
+      valor: value.toString(), // Incrementa o valor
+    })
+    .then(() => {
+      // Atualize o localStorage com o novo valor
+      localStorage.setItem(key, value);
 
-          // Gerencia o cooldown do flashcard e remove o flashcard atual
-          this.flashcardCooldowns[this.currentFlashcard] = rememberType === 'lembrei' ? 5 : rememberType === 'quase' ? 3 : 1;
-          this.flashcards.splice(this.currentFlashcard, 1);
-          this.currentFlashcard = null;
-        })
-        .catch((error) => {
-          console.error('Erro ao atualizar o flashcard:', error);
-        });
-      }
-    },
+      // Gerencia o cooldown do flashcard e remove o flashcard atual
+      this.flashcardCooldowns[this.currentFlashcard] = rememberType === 'lembrei' ? 5 : 1;
+      console.log("Cooldowns atualizados:", this.flashcardCooldowns);
+      this.flashcards.splice(this.currentFlashcardIndex, 1);
+
+      // Atualiza o localStorage após a remoção
+      this.saveFlashcardsToLocalStorage();
+      this.currentFlashcard = null;
+      this.currentFlashcardIndex = null; // Reseta o índice após a remoção
+    })
+    .catch((error) => {
+      console.error('Erro ao atualizar o flashcard:', error);
+    });
+  }
+},
     handleLogout() {
       localStorage.removeItem('user'); // Limpa a sessão do usuário
       this.$router.push('/login');
@@ -496,9 +515,6 @@ export default {
     closeSummary() {
       this.showSummary = false;
     },
-    toggleNotifications() {
-      this.showNotifications = !this.showNotifications;
-    },
     toggleAtividadesPopup() {
       this.showAtividades = !this.showAtividades;
       if (this.showAtividades) {
@@ -523,7 +539,6 @@ export default {
             respostasSimuladoDoisIncorretas: user.respostasSimuladoDoisIncorretas,
             flashcardsRealizados: user.flashcardsRealizados,
             flashcardLembrei: user.flashcardLembrei,
-            flashcardQuaseNaoLembrei: user.flashcardQuaseNaoLembrei,
             flashcardNaoLembrei: user.flashcardNaoLembrei,
           };
         } else {
@@ -595,48 +610,6 @@ export default {
 .user-info {
   display: flex;
   align-items: center;
-}
-
-.notification-widget {
-  position: relative;
-  margin-right: 1rem;
-}
-
-.btn-notification {
-  padding: 0.5rem;
-  background-color: #28a745;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 1.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn-notification:hover {
-  background-color: #218838;
-}
-
-.notification-dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background-color: #fff;
-  padding: 0.5rem;
-  border-radius: 4px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  width: 200px;
-  z-index: 10;
-  display: none;
-  opacity: 0; /* Torna o dropdown invisível */
-  transition: opacity 0.3s;
-}
-
-.notification-widget:hover .notification-dropdown {
-  display: block;
-  opacity: 1; /* Torna o dropdown visível */
 }
 
 .btn-logout {
