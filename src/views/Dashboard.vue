@@ -145,6 +145,7 @@ export default {
       flashcardsFromAPI: [],
       currentSimulado: null,
       limiteFlashcards: 0,
+      notRememberedFlashcards: [],
     };
   },
   computed: {
@@ -167,6 +168,7 @@ export default {
     this.checkSimuladoStatus();
     this.carregarFlashcards();
     this.loadFlashcardsFromLocalStorage();
+    this.loadNotRememberedFlashcards();
   },
 
   methods: {
@@ -207,28 +209,54 @@ export default {
       }
     },
     startFlashcardInterval() {
-  setInterval(() => {
-    // Verifica se há flashcards disponíveis
+    const storedNextFlashcardTime = localStorage.getItem('nextFlashcardTime');
+    const currentTime = Date.now();
+    
+    let timeUntilNextFlashcard = 900000; // 10 segundos de intervalo por padrão
+
+    // Se existir um tempo armazenado no localStorage, calcule o tempo restante
+    if (storedNextFlashcardTime) {
+      const storedTime = parseInt(storedNextFlashcardTime, 10);
+      timeUntilNextFlashcard = storedTime - currentTime;
+      if (timeUntilNextFlashcard < 0) {
+        timeUntilNextFlashcard = 0; // Se o tempo já passou, exibir imediatamente o próximo flashcard
+      }
+    }
+
+    setTimeout(() => {
+      this.loadNextFlashcard(); // Função para carregar o próximo flashcard
+
+      // Defina um novo tempo para o próximo flashcard
+      const newNextFlashcardTime = Date.now() + 900000; // Próximo intervalo de 10 segundos
+      localStorage.setItem('nextFlashcardTime', newNextFlashcardTime);
+
+      // Continue chamando o intervalo após exibir um flashcard
+      this.startFlashcardInterval();
+    }, timeUntilNextFlashcard);
+  },
+
+loadNextFlashcard() {
     if (this.flashcards.length >= this.limiteFlashcards || this.flashcardsFromAPI.length === 0) {
       console.log('Todos os flashcards foram carregados ou limite atingido');
       return;
     }
 
-    // Seleciona um índice aleatório
-    const randomIndex = Math.floor(Math.random() * this.flashcardsFromAPI.length);
+    if (this.notRememberedFlashcards.length > 0) {
+      const nextFlashcard = this.notRememberedFlashcards.shift();
+      this.flashcards.push(nextFlashcard);
+      this.saveNotRememberedFlashcardsToLocalStorage();
+      console.log('Flashcard não lembrado carregado:', nextFlashcard);
+      return;
+    }
 
-    // Carrega o flashcard aleatório
+    const randomIndex = Math.floor(Math.random() * this.flashcardsFromAPI.length);
     const nextFlashcard = this.flashcardsFromAPI[randomIndex];
-    
+
     this.flashcards.push(nextFlashcard);
     this.saveFlashcardsToLocalStorage();
-
-    // Remove o flashcard carregado para evitar repetição
     this.flashcardsFromAPI.splice(randomIndex, 1);
-
     console.log('Flashcard carregado:', nextFlashcard);
-  }, 3000); // Intervalo de 6 segundos
-},
+  },
 
     saveFlashcardsToLocalStorage() {
       localStorage.setItem('flash', JSON.stringify(this.flashcards));
@@ -279,10 +307,10 @@ export default {
       // Requisição GET para pegar os dados do flashcard do usuário
       axios.get(`http://localhost:8080/api/flashcards/?id=${flashcardId}`)
         .then((response) => {
-          const { enunciado, resposta } = response.data;
+          const { id, enunciado, resposta } = response.data;
 
           // Atualiza o flashcard atual com os dados recebidos
-          this.currentFlashcard = { enunciado, resposta };
+          this.currentFlashcard = { id, enunciado, resposta };
 
           this.currentFlashcardIndex = index;
 
@@ -313,6 +341,18 @@ export default {
       this.showBack = !this.showBack;
     },
 
+    saveNotRememberedFlashcardsToLocalStorage() {
+    localStorage.setItem('notRememberedFlashcards', JSON.stringify(this.notRememberedFlashcards));
+  },
+
+  // Função para carregar flashcards não lembrados do localStorage
+  loadNotRememberedFlashcards() {
+    const storedNotRememberedFlashcards = localStorage.getItem('notRememberedFlashcards');
+    if (storedNotRememberedFlashcards) {
+      this.notRememberedFlashcards = JSON.parse(storedNotRememberedFlashcards);
+    }
+  },
+
     handleRemember(rememberType) {
   const userEmail = localStorage.getItem('email');
   let key = '';
@@ -322,6 +362,14 @@ export default {
     key = 'flashcardLembrei';
   } else if (rememberType === 'nao') {
     key = 'flashcardNaoLembrei';
+
+    const notRememberedCard = {
+        id: this.currentFlashcard.id,
+        enunciado: this.currentFlashcard.enunciado,
+        resposta: this.currentFlashcard.resposta,
+      };
+      this.notRememberedFlashcards.push(notRememberedCard);
+      this.saveNotRememberedFlashcardsToLocalStorage();
   }
 
   value = parseInt(localStorage.getItem(key)) || 0;
@@ -338,8 +386,7 @@ export default {
       localStorage.setItem(key, value);
 
       // Gerencia o cooldown do flashcard e remove o flashcard atual
-      this.flashcardCooldowns[this.currentFlashcard] = rememberType === 'lembrei' ? 5 : 1;
-      console.log("Cooldowns atualizados:", this.flashcardCooldowns);
+      this.flashcardCooldowns[this.currentFlashcardIndex] = rememberType === 'lembrei' ? 5 : 1;
       this.flashcards.splice(this.currentFlashcardIndex, 1);
 
       // Atualiza o localStorage após a remoção
