@@ -212,7 +212,7 @@ export default {
     const storedNextFlashcardTime = localStorage.getItem('nextFlashcardTime');
     const currentTime = Date.now();
     
-    let timeUntilNextFlashcard = 900000; // 10 segundos de intervalo por padrão
+    let timeUntilNextFlashcard = 900000; // 15 minutos de intervalo por padrão
 
     // Se existir um tempo armazenado no localStorage, calcule o tempo restante
     if (storedNextFlashcardTime) {
@@ -227,7 +227,7 @@ export default {
       this.loadNextFlashcard(); // Função para carregar o próximo flashcard
 
       // Defina um novo tempo para o próximo flashcard
-      const newNextFlashcardTime = Date.now() + 900000; // Próximo intervalo de 10 segundos
+      const newNextFlashcardTime = Date.now() + 900000; // Próximo intervalo de 15 minutos
       localStorage.setItem('nextFlashcardTime', newNextFlashcardTime);
 
       // Continue chamando o intervalo após exibir um flashcard
