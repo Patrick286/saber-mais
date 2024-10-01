@@ -50,7 +50,7 @@ export default {
       try {
         const formattedDate = this.formatDate(this.birthdate);
 
-        const response = await fetch('http://18.225.32.96/api/user', {
+        const response = await fetch('http://18.225.32.96:8080/api/user', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
