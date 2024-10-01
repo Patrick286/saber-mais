@@ -30,7 +30,7 @@ export default {
   methods: {
     async handleLogin() {
       try {
-        const response = await axios.post('http://localhost:8080/api/login', {
+        const response = await axios.post('http://18.225.32.96/api/login', {
           email: this.email,
           senha: this.senha,
         });

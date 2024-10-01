@@ -173,7 +173,7 @@ export default {
 
   methods: {
     carregarFlashcards() {
-  axios.get('http://localhost:8080/api/flashcards')
+  axios.get('http://18.225.32.96/api/flashcards')
     .then(response => {
       this.flashcardsFromAPI = response.data; // Armazena todos os flashcards recebidos da API
       console.log('Flashcards carregados do banco de dados:', this.flashcardsFromAPI);
@@ -191,7 +191,7 @@ export default {
     checkSimuladoStatus() {
       const userEmail = localStorage.getItem('email'); // Obtém o email do usuário
       if (userEmail) {
-        axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`)
+        axios.get(`http://18.225.32.96/api/user/by-email?email=${userEmail}`)
           .then((response) => {
             const { simuladosUmRealizado } = response.data;
             this.userActivities.simuladosUmRealizado = simuladosUmRealizado;
@@ -305,7 +305,7 @@ loadNextFlashcard() {
     // Verifique se o 1º Simulado foi realizado
     if (this.userActivities.simuladosUmRealizado === 1) {
       // Requisição GET para pegar os dados do flashcard do usuário
-      axios.get(`http://localhost:8080/api/flashcards/?id=${flashcardId}`)
+      axios.get(`http://18.225.32.96/api/flashcards/?id=${flashcardId}`)
         .then((response) => {
           const { id, enunciado, resposta } = response.data;
 
@@ -316,7 +316,7 @@ loadNextFlashcard() {
 
           this.showBack = false;
         })
-      axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`)
+      axios.get(`http://18.225.32.96/api/user/by-email?email=${userEmail}`)
         .then((response) => {
           console.log('Dados do flashcard:', response.data);
           const { flashcardLembrei, flashcardQuaseNaoLembrei, flashcardNaoLembrei } = response.data;
@@ -377,7 +377,7 @@ loadNextFlashcard() {
 
   if (userEmail && key) {
     // Requisição PUT para atualizar o campo correspondente no banco de dados
-    axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
+    axios.put(`http://18.225.32.96/api/user/updateField?email=${userEmail}`, {
       chave: key,
       valor: value.toString(), // Incrementa o valor
     })
@@ -413,7 +413,7 @@ loadNextFlashcard() {
     const userEmail = localStorage.getItem('email');
 
     try {
-      const response = await axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`);
+      const response = await axios.get(`http://18.225.32.96/api/user/by-email?email=${userEmail}`);
       const userData = response.data;
 
       // Armazenando os dados do 1º Simulado
@@ -439,7 +439,7 @@ loadNextFlashcard() {
     const userEmail = localStorage.getItem('email');
 
     try {
-      const response = await axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`);
+      const response = await axios.get(`http://18.225.32.96/api/user/by-email?email=${userEmail}`);
       const userData = response.data;
 
       // Armazenando os dados do 2º Simulado
@@ -507,36 +507,36 @@ loadNextFlashcard() {
       try {
         if (this.currentSimulado === 1) {
         // Atualiza simuladosUmRealizado
-        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
+        await axios.put(`http://18.225.32.96/api/user/updateField?email=${userEmail}`, {
           chave: 'simuladosUmRealizado',
           valor: '1',
         });
 
         // Atualiza respostasSimuladoUmCorretas
-        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
+        await axios.put(`http://18.225.32.96/api/user/updateField?email=${userEmail}`, {
           chave: 'respostasSimuladoUmCorretas',
           valor: this.correctAnswers.toString(),
         });
 
         // Atualiza respostasSimuladoUmIncorretas
-        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
+        await axios.put(`http://18.225.32.96/api/user/updateField?email=${userEmail}`, {
           chave: 'respostasSimuladoUmIncorretas',
           valor: this.wrongAnswers.toString(),
         });
       } else if (this.currentSimulado === 2) {
-        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
+        await axios.put(`http://18.225.32.96/api/user/updateField?email=${userEmail}`, {
           chave: 'simuladosDoisRealizado',
           valor: '1',
         });
 
         // Atualiza respostasSimuladoUmCorretas
-        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
+        await axios.put(`http://18.225.32.96/api/user/updateField?email=${userEmail}`, {
           chave: 'respostasSimuladoDoisCorretas',
           valor: this.correctAnswers.toString(),
         });
 
         // Atualiza respostasSimuladoUmIncorretas
-        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
+        await axios.put(`http://18.225.32.96/api/user/updateField?email=${userEmail}`, {
           chave: 'respostasSimuladoDoisIncorretas',
           valor: this.wrongAnswers.toString(),
         });
@@ -571,7 +571,7 @@ loadNextFlashcard() {
     loadUserActivities() {
   const userEmail = localStorage.getItem('email'); // Pegue o email do localStorage
   if (userEmail) {
-    axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`) // Faz a requisição GET para buscar as atividades do usuário
+    axios.get(`http://18.225.32.96/api/user/by-email?email=${userEmail}`) // Faz a requisição GET para buscar as atividades do usuário
       .then((response) => {
         console.log('Resposta da API:', response.data);
         const user = response.data;
@@ -600,7 +600,7 @@ loadNextFlashcard() {
   }
 },
     fetchQuestions() {
-      axios.get(`http://localhost:8080/api/questions`) // Faz a requisição GET para o endpoint
+      axios.get(`http://18.225.32.96/api/questions`) // Faz a requisição GET para o endpoint
         .then(response => {
           this.questionsFromAPI = response.data; // Armazena as questões no estado
         })
