@@ -1,45 +1,31 @@
 <template>
-  <div class="dashboard-container">
-    <!-- Cabeçalho (Header) -->
-    <header class="dashboard-header">
-      <div class="logo">Saber+</div>
-      <nav class="main-nav"></nav>
-      <div class="user-info">
-
-        <!-- Botão "Suas Atividades" -->
-        <button class="btn-atividades" @click="toggleAtividadesPopup">Minhas atividades</button>
-        <button @click="handleLogout" class="btn-logout">Sair</button>
+    <body>
+      <div class="header">
+        <h1>Saber+</h1>
+        <div>
+        <button class="simulado-button" @click="startSimuladoUm" :disabled="userActivities.simuladosUmRealizado === 1">1º Simulado</button>
+        <button class="simulado-button" @click="startSimuladoDois" :disabled="userActivities.simuladosUmRealizado === 0 || userActivities.simuladosDoisRealizado === 1">2º Simulado</button>
+        <button @click="toggleAtividadesPopup">Minha atividade</button>
+        <button @click="handleLogout">Sair</button>
+        </div>
       </div>
-    </header>
+      <div class="content">
+    <p>Flashcards:</p>
+    <div class="cards-container">
+      <button class="arrow left" @click="scrollLeft"><i class="fas fa-chevron-left"></i></button>
 
-    <!-- Área Principal (Main Content) -->
-    <main class="dashboard-main">
-      <!-- Seção de Funcionalidades -->
-      <section class="features">
-        <div class="feature-box">
-          <h3>Simulado</h3>
-          <button 
-          class="btn-start-simulado" 
-          @click="startSimuladoUm" 
-          :disabled="userActivities.simuladosUmRealizado === 1">
-          Iniciar 1º Simulado
-        </button>
-        <button 
-          class="btn-start-simulado" 
-          @click="startSimuladoDois" 
-          :disabled="userActivities.simuladosUmRealizado === 0 || userActivities.simuladosDoisRealizado === 1">
-          Iniciar 2º Simulado
-        </button>
+      <div class="cards" id="cards">
+        <!-- Gerar os flashcards como activycards -->
+        <div class="activycard" v-for="(flashcard, index) in flashcards" :key="index" @click="showFlashcard(index)">
+          <div class="card-text">Flashcard {{ index + 1 }}</div> <!-- Mostra o número do flashcard -->
         </div>
-        <div class="feature-box flashcards-box">
-          <h3>Flashcards</h3>
-          <div v-for="(flashcard, index) in flashcards" :key="index" class="flashcard-preview">
-            <span>Pergunta {{ index + 1 }}</span>
-            <button @click="showFlashcard(index)">▶️</button>
-          </div>
-        </div>
-      </section>
-    </main>
+      </div>
+      <button class="arrow right" @click="scrollRight"><i class="fas fa-chevron-right"></i></button>
+    </div>
+  </div>
+    </body>
+
+    <div v-if="currentFlashcard" class="overlay"></div>
 
     <!-- Pop-up do Flashcard -->
     <div v-if="currentFlashcard !== null" class="flashcard-popup">
@@ -63,9 +49,9 @@
 
     <!-- Pop-up do Simulado -->
 <div v-if="showSimulado" class="simulado-popup">
-  <div class="content">
+  <div class="scontent">
     <h1>Simulado</h1>
-    <p v-for="(text, index) in getQuestionTexts" :key="index" class="question-text">{{ text }}</p>
+    <p v-for="(text, index) in getQuestionTexts" :key="index" class="question-textt">{{ text }}</p>
     <div class="options">
       <button v-for="(option, index) in currentQuestion.alternativas" :key="index" @click="submitAnswer(option)" class="option-button">
         {{ option }}
@@ -76,31 +62,32 @@
 </div>
 
 <!-- Pop-up de Resumo do Simulado -->
+<div v-if="showSummary" class="overlay"></div>
 <div v-if="showSummary" class="modal">
-        <h2>Resumo do Simulado</h2>
-        <h1>{{ correctAnswers }}/{{ totalQuestions }}</h1>
-        <p>Muito bem! Você completou o simulado, agora podemos trabalhar juntos nos assuntos.</p>
-        <p>Feche essa janela e comece a usar os <i>flashcards</i>!</p>
-        <button @click="closeSummary">Fechar</button>
-    </div>
+    <h2>Resumo do Simulado</h2>
+    <h1>{{ correctAnswers }}/{{ totalQuestions }}</h1>
+    <p>Muito bem! Você completou o simulado, agora podemos trabalhar juntos nos assuntos.</p>
+    <p>Feche essa janela e comece a usar os <i>flashcards</i>!</p>
+    <button @click="closeSummary">Fechar</button>
+</div>
 
-    <!-- Pop-up de Atividades -->
+<!-- Pop-up de Atividades -->
 <div v-if="showAtividades" class="atividades-popup">
   <div class="atividades-content">
     <h2>Minhas Atividades</h2>
     <p>1º Simulado: {{ userActivities.simuladosUmRealizado ? 'Feito.' : 'Não Fez.' }}</p>
-    <p>1º Simulado - Respostas corretas: {{ userActivities.respostasSimuladoUmCorretas }}</p>
-    <p>1º Simulado - Respostas incorretas: {{ userActivities.respostasSimuladoUmIncorretas }}</p>
+    <p>Respostas corretas: {{ userActivities.respostasSimuladoUmCorretas + '.' }}</p>
+    <p>Respostas incorretas: {{ userActivities.respostasSimuladoUmIncorretas + '.' }}</p>
     <p>2º Simulado: {{ userActivities.simuladosDoisRealizado ? 'Feito.' : 'Não fez.' }}</p>
-    <p>2º Simulado - Respostas corretas: {{ userActivities.respostasSimuladoDoisCorretas }}</p>
-    <p>2º Simulado - Respostas incorretas: {{ userActivities.respostasSimuladoDoisIncorretas }}</p>
-    <p>Flashcards: {{ userActivities.flashcardsRealizados }}</p>
-    <p>Flashcards - Lembrei: {{ userActivities.flashcardLembrei }}</p>
-    <p>Flashcards - Não lembrei: {{ userActivities.flashcardNaoLembrei }}</p>
+    <p>Respostas corretas: {{ userActivities.respostasSimuladoDoisCorretas + '.' }}</p>
+    <p>Respostas incorretas: {{ userActivities.respostasSimuladoDoisIncorretas + '.' }}</p>
+    <p>Flashcards:</p>
+    <p>Flashcards - Lembrei: {{ userActivities.flashcardLembrei + '.' }}</p>
+    <p>Flashcards - Não lembrei: {{ userActivities.flashcardNaoLembrei + '.' }}</p>
     <button @click="toggleAtividadesPopup" class="btn btn-close">Fechar</button>
   </div>
 </div>
-  </div>
+
 </template>
 
 <script>
@@ -142,6 +129,7 @@ export default {
       currentSimulado: null,
       limiteFlashcards: 0,
       notRememberedFlashcards: [],
+      currentTime: ''
     };
   },
   computed: {
@@ -165,9 +153,156 @@ export default {
     this.carregarFlashcards();
     this.loadFlashcardsFromLocalStorage();
     this.loadNotRememberedFlashcards();
+    this.loadFlashcardsBasedOnTime();
+
+    this.updateTime(); // Chama o método assim que o componente é montado
+    setInterval(this.updateTime, 60000); // Atualiza a cada 60 segundos
   },
 
   methods: {
+    openDatabase() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open('FlashcardApp', 1); // Abre ou cria o banco de dados
+
+      request.onupgradeneeded = function(event) {
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains('timeStore')) {
+          db.createObjectStore('timeStore', { keyPath: 'id' }); // Cria uma store com chave primária 'id'
+        }
+      };
+
+      request.onsuccess = function(event) {
+        const db = event.target.result;
+        resolve(db);
+      };
+
+      request.onerror = function(event) {
+        console.error('Erro ao abrir IndexedDB:', event.target.errorCode);
+        reject(event.target.errorCode);
+      };
+    });
+  },
+  
+  saveTimeToIndexedDB(time) {
+    this.openDatabase().then((db) => {
+      const transaction = db.transaction(['timeStore'], 'readwrite');
+      const store = transaction.objectStore('timeStore');
+
+      // Adiciona ou atualiza o horário no banco de dados
+      store.put({ id: 'currentTime', value: time });
+
+      transaction.oncomplete = () => {
+        console.log('Horário salvo com sucesso no IndexedDB');
+      };
+
+      transaction.onerror = () => {
+        console.error('Erro ao salvar horário no IndexedDB');
+      };
+    });
+  },
+  
+  getTimeFromIndexedDB() {
+    return new Promise((resolve, reject) => {
+      this.openDatabase().then((db) => {
+        const transaction = db.transaction(['timeStore'], 'readonly');
+        const store = transaction.objectStore('timeStore');
+
+        const request = store.get('currentTime');
+
+        request.onsuccess = () => {
+          if (request.result) {
+            resolve(request.result.value);
+          } else {
+            resolve(null); // Nenhum horário salvo
+          }
+        };
+
+        request.onerror = () => {
+          reject('Erro ao obter o horário do IndexedDB');
+        };
+      });
+    });
+  },
+  updateTime() {
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  this.currentTime = `${hours}:${minutes}`;
+  
+  // Salva o horário atual no IndexedDB
+  this.saveTimeToIndexedDB(this.currentTime);
+
+  console.log(`Hora atualizada: ${this.currentTime}`);
+},
+
+async getElapsedTimeInMinutes() {
+  const lastResetTime = await this.getTimeFromIndexedDB(); // Obtém o último horário salvo no IndexedDB
+  const currentTime = this.currentTime; // Pega o horário atualizado
+
+  if (!lastResetTime || !currentTime) {
+    return 0; // Se não houver tempo salvo, retorna 0
+  }
+
+  const [lastResetHours, lastResetMinutes] = lastResetTime.split(':').map(Number);
+  const [currentHours, currentMinutes] = currentTime.split(':').map(Number);
+
+  const lastResetDate = new Date();
+  lastResetDate.setHours(lastResetHours, lastResetMinutes, 0, 0);
+
+  const currentDate = new Date();
+  currentDate.setHours(currentHours, currentMinutes, 0, 0);
+
+  const elapsedTime = currentDate - lastResetDate;
+  return Math.floor(elapsedTime / (1000 * 60)); // Converte para minutos
+},
+calculateFlashcardsToShow() {
+  const elapsedMinutes = this.getElapsedTimeInMinutes();
+
+  // Um flashcard a cada 15 minutos, portanto divida os minutos por 15
+  const flashcardsToShow = Math.floor(elapsedMinutes / 1);
+  
+  // Limite para não passar do total de flashcards
+  return Math.min(flashcardsToShow, this.limiteFlashcards);
+},
+
+resetFlashcards() {
+  // Armazena a hora atual como o último reset
+  this.updateTime(); // Chama o updateTime para atualizar o tempo
+  localStorage.setItem('lastResetTime', this.currentTime); // Armazena o horário atual como último reset
+
+  // Reseta o progresso dos flashcards
+  this.flashcards = [];
+},
+
+async loadFlashcardsBasedOnTime() {
+  const elapsedMinutes = await this.getElapsedTimeInMinutes();
+
+  // Verifica se o navegador foi fechado por mais de 1 minuto
+  if (elapsedMinutes >= 1) {
+    const flashcardsToShow = Math.floor(elapsedMinutes / 1); // Carregar um flashcard por minuto
+    location.reload()
+    
+    // Limite para não passar do total de flashcards
+    for (let i = 0; i < Math.min(flashcardsToShow, this.limiteFlashcards); i++) {
+      this.loadNextFlashcard();
+      location.reload()
+    }
+  } else {
+    console.log('Navegador não foi fechado tempo suficiente para carregar novos flashcards.');
+  }
+},
+    scrollLeft() {
+      document.getElementById('cards').scrollBy({
+        left: -150,
+        behavior: 'smooth',
+      });
+    },
+    scrollRight() {
+      document.getElementById('cards').scrollBy({
+        left: 150,
+        behavior: 'smooth',
+      });
+    },
     carregarFlashcards() {
   axios.get('http://localhost:8080/api/flashcards')
     .then(response => {
@@ -208,7 +343,7 @@ export default {
     const storedNextFlashcardTime = localStorage.getItem('nextFlashcardTime');
     const currentTime = Date.now();
     
-    let timeUntilNextFlashcard = 900000; // 15 minutos de intervalo por padrão
+    let timeUntilNextFlashcard = 60000; // 15 minutos de intervalo por padrão
 
     // Se existir um tempo armazenado no localStorage, calcule o tempo restante
     if (storedNextFlashcardTime) {
@@ -223,7 +358,7 @@ export default {
       this.loadNextFlashcard(); // Função para carregar o próximo flashcard
 
       // Defina um novo tempo para o próximo flashcard
-      const newNextFlashcardTime = Date.now() + 900000; // Próximo intervalo de 15 minutos
+      const newNextFlashcardTime = Date.now() + 60000; // Próximo intervalo de 15 minutos
       localStorage.setItem('nextFlashcardTime', newNextFlashcardTime);
 
       // Continue chamando o intervalo após exibir um flashcard
@@ -398,6 +533,7 @@ loadNextFlashcard() {
     handleLogout() {
       localStorage.removeItem('user'); // Limpa a sessão do usuário
       this.$router.push('/login');
+      location.reload()
     },
     resetInactivityTimer() {
       clearTimeout(this.timeoutId);
@@ -621,384 +757,414 @@ loadNextFlashcard() {
 };
 </script>
 
+<style>
 
-<style scoped>
-.dashboard-container {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background-color: #f0f0f0;
-  color: #333;
-}
+@import url('https://fonts.googleapis.com/css2?family=Commissioner:wght@400;700&display=swap');
 
-/* Cabeçalho */
-.dashboard-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  background-color: #007bff;
-  color: #fff;
-}
+    body {
+        font-family: 'Commissioner', sans-serif;
+        background-color: #0d161b;
+        color: #a3b18a;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+    }
 
-.logo {
-  font-size: 1.5rem;
-}
+    .header h1 {
+        font-size: 2em;
+        font-weight: bold;
+        color: #becc79;
+        margin-top: 1px;
+    }
 
-.main-nav a {
-  margin: 0 1rem;
-  color: #fff;
-  text-decoration: none;
-}
+    .header button {
+        background-color: #757e4a;
+        color: #dee3e4;
+        border: none;
+        padding: 10px 20px;
+        margin-left: 10px;
+        margin-bottom: 28px;
+        cursor: pointer;
+        border-radius: 5px;
+    }
 
-.user-info {
-  display: flex;
-  align-items: center;
-}
+    .header button:last-child {
+        background-color: #996750;
+        color: #dee3e4;
+    }
 
-.btn-logout {
-  background-color: #dc3545;
-  color: white;
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
+    .header .simulado-button {
+        background-color: #79adcc;
+        color:#ffffff;
+    }
 
-.btn-logout:hover {
-  background-color: #c82333;
-}
+    .content {
+        text-align: center;
+        margin-top: 50px;
+        margin-bottom: 400px;
+    }
 
-/* Área Principal */
-.dashboard-main {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex-grow: 1;
-  padding: 1rem;
-}
+    .content p {
+        font-size: 1.5em;
+        font-weight: bold;
+        color: #757e4a;
+        margin-bottom: 40px;
+    }
 
-.features {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 2rem;
-}
+    .cards-container {
+        display: flex;
+        align-items: center;
+        padding: 20px;
+        position: relative;
+    }
 
-.feature-box {
-  background-color: #fff;
-  padding: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  width: 300px;
-}
+    .cards {
+        display: flex;
+        gap: 20px;
+        overflow: hidden;
+        width: 100%;
+    }
 
-.btn-start-simulado {
-  background-color: #007bff;
-  color: white;
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
+    .card {
+        min-width: 150px;
+        height: 200px;
+        background-color: #1c2b2d;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 10px;
+    }
 
-.btn-start-simulado:hover {
-  background-color: #0069d9;
-}
+    .arrow {
+        position: absolute;
+        bottom: -30px;
+        background-color: #757e4a;
+        color: white;
+        border: none;
+        padding: 10px;
+        cursor: pointer;
+        border-radius: 50%;
+        z-index: 1;
+    }
 
-/* Pop-up do Simulado */
-.overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 100;
-}
+    .arrow.left {
+        left: 50%;
+        transform: translateX(-250%);
+    }
 
-.simulado-popup {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #0d161b;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 101;
-  overflow-y: auto;
-}
+    .arrow.right {
+        right: 50%;
+        transform: translateX(250%);
+    }
 
-.summary-popup .summary-content {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: #fff;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  z-index: 101;
-  width: 90%;
-  max-width: 600px;
-  max-height: 80vh;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
+    .scontent {
+        background-color: #e0e1dd;
+        color: #0d1b2a;
+        padding: 20px;
+        border-radius: 10px;
+        width: 700px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        overflow-y: auto;
+        max-height: 80vh;
+        margin: 50px auto;
+    }
 
+    .scontent h1 {
+        font-size: 24px;
+        margin-bottom: 20px;
+        text-align: center;
+        color: #0d161b;
+    }
 
-.summary-popup p {
-  text-align: center;
-}
+    .scontent p {
+        margin-bottom: 20px;
+        text-align: justify;
+    }
 
-.simulado-popup .question-box,
-.summary-popup .summary-content {
-  margin-bottom: 1rem;
-}
+    .scontent .options {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
 
-.question-text {
-  font-size: 1.2rem;
-  margin-bottom: 1rem;
-}
+    .scontent .options button {
+        background-color: #79adcc;
+        color: #0d161b;
+        border: none;
+        padding: 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        text-align: left;
+    }
 
-.options {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
+    .scontent .options button:hover {
+        background-color: #219ebc;
+    }
 
-.option-button {
-  padding: 0.5rem;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  text-align: left;
-  transition: background-color 0.3s;
-}
+    .scontent .quit-button {
+        background-color: #996750;
+        color: #ffffff;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 20px;
+    }
 
-.option-button:hover {
-  background-color: #0056b3;
-}
+    .scontent::-webkit-scrollbar {
+        width: 12px;
+    }
 
-.btn {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  text-align: center;
-}
+    .scontent::-webkit-scrollbar-track {
+        background: #bbbcaf;
+        border-radius: 10px;
+    }
 
-.btn-cancel {
-  background-color: #dc3545;
-  color: white;
-  margin-top: 1rem;
-}
+    .scontent::-webkit-scrollbar-thumb {
+        background-color: #8f897b;
+        border-radius: 10px;
+        border: 3px solid #bbbcaf;
+    }
 
-.btn-cancel:hover {
-  background-color: #c82333;
-}
+    .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 100;
+    }
 
-.btn-close {
-  background-color: #007bff;
-  color: white;
-}
+    .simulado-popup {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #0d161b;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 101;
+        overflow-y: auto;
+    }
 
-.btn-close:hover {
-  background-color: #0056b3;
-}
+    .simulado-popup .question-box,
+    .summary-popup .summary-content {
+        margin-bottom: 1rem;
+    }
 
-.btn-atividades {
-  background-color: #ffc107;
-  color: white;
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-right: 1rem;
-}
+    .question-textt {
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+    }
 
-.btn-atividades:hover {
-  background-color: #e0a800;
-}
+    .activycard {
+        min-width: 150px;
+        height: 200px;
+        background-color: #79adcc;
+        border-radius: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
 
-/* Pop-up de Atividades */
+    .activycard .card-text {
+        font-size: 24px;
+        font-weight: bold;
+        color: #ffffff;
+    }
+
+    .flashcard-popup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        z-index: 101;
+        width: 30%;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow-y: auto;
+        text-align: justify;
+    }
+
+    .flashcard-popup .question-box {
+        margin-bottom: 1rem;
+    }
+
+    .flashcard-popup .question-text {
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+    }
+
+    .flashcard-popup .options {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .flashcard-popup .option-button {
+        padding: 0.5rem;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        text-align: left;
+        transition: background-color 0.3s;
+    }
+
+    /* Estilo geral do Pop-up */
 .atividades-popup {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: #fff;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  z-index: 101;
-  width: 90%;
-  max-width: 600px;
-  max-height: 80vh;
-  overflow-y: auto;
-  text-align: center;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #e0e1dd;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 101;
+    width: 90%;
+    max-width: 320px;
+    max-height: 80vh;
+    overflow-y: auto;
+    text-align: center;
 }
 
-.flashcards-box {
-  max-height: 200px;
-  overflow-y: scroll;
-  background-color: #fff;
-  padding: 10px;
-  margin-top: 20px;
+/* Estilo do Título "Minhas Atividades" */
+.atividades-content h2 {
+    color: #0d161b; /* Cor customizável */
+    font-size: 1.5rem;
 }
 
-.flashcard-preview {
-  background-color: white;
-  border-radius: 5px;
-  margin-bottom: 10px;
-  padding: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+/* Estilo do conteúdo (parágrafos) */
+.atividades-content p {
+    color: #0d161b; /* Cor dos textos */
+    text-align: center;
 }
 
-.flashcard-popup {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: #fff; /* Altere a cor de fundo */
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  z-index: 101;
-  width: 90%;
-  max-width: 600px;
-  max-height: 80vh;
-  overflow-y: auto;
-  text-align: justify;
+/* Estilo do botão Fechar */
+.btn-close {
+  background-color: #996750;
+        color: #dee3e4;
+        border: none;
+        padding: 10px 20px;
+        margin-left: 10px;
+        margin-bottom: 28px;
+        cursor: pointer;
+        border-radius: 5px;
 }
 
-.flashcard-popup .question-box {
-  margin-bottom: 1rem;
-}
+    .modal {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #e0e1dd;
+        z-index: 101;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        width: 300px;
+        max-width: 90%;
+        text-align: center;
+        box-sizing: border-box;
+    }
 
-.flashcard-popup .question-text {
-  font-size: 1.2rem;
-  margin-bottom: 1rem;
-}
+    .modal h2 {
+        margin: 0;
+        font-size: 24px;
+        text-align: center;
+    }
 
-.flashcard-popup .options {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
+    .modal h1 {
+        margin: 20px 0;
+        font-size: 48px;
+        text-align: center;
+    }
 
-.flashcard-popup .option-button {
-  padding: 0.5rem;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  text-align: left;
-  transition: background-color 0.3s;
-}
+    .modal p {
+        margin: 20px 0;
+        font-size: 16px;
+        text-align: center;
+    }
 
+    .modal h2,
+    .modal h1,
+    .modal p {
+        text-align: center;
+        margin: 0 auto;
+        color: #000000;
+    }
 
+    .modal button {
+        background-color: #757e4a;
+        color: #dee3e4;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 5px;
+        display: block;
+        margin: 20px auto 0 auto;
+    }
 
-        .content {
-            background-color: #e0e1dd;
-            color: #0d1b2a;
-            padding: 10px;
-            border-radius: 10px;
-            width: 650px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            overflow-y: auto;
-            max-height: 90vh;
-            margin: 0;
-        }
-        .content h1 {
-            font-size: 24px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .content p {
-            margin-bottom: 20px;
-            text-align: justify;
-        }
-        .content .options {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .content .options button {
-            background-color: #79adcc;
-            color: #0d1b2a;
-            border: none;
-            padding: 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            text-align: left;
-        }
-        .content .options button:hover {
-            background-color: #219ebc;
-        }
-        .content .quit-button {
-            background-color: #996750;
-            color: #ffffff;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-        /* Custom Scrollbar */
-        .content::-webkit-scrollbar {
-            width: 12px;
-        }
-        .content::-webkit-scrollbar-track {
-            background: #bbbcaf;
-            border-radius: 10px;
-        }
-        .content::-webkit-scrollbar-thumb {
-            background-color: #8f897b;
-            border-radius: 10px;
-            border: 3px solid #bbbcaf;
-        }
+    .flashcard-back {
+        background-color: #e0e1dd;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+    }
 
-        .modal {
-            background-color: #e0e0e0;
-            color: #000000;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            width: 300px;
-            text-align: center;
-            margin: 100px auto;
-            font-family: Arial, sans-serif;
-        }
-        .modal h2 {
-            margin: 0;
-            font-size: 24px;
-        }
-        .modal h1 {
-            margin: 20px 0;
-            font-size: 48px; /* Increased font size */
-        }
-        .modal p {
-            margin: 20px 0;
-            font-size: 16px;
-        }
-        .modal button {
-            background-color: #757e4a;
-            color: #ffffff;
-            border: none;
-            padding: 10px 20px;
-            cursor: pointer;
-            border-radius: 5px;
-        }
+    .flashcard-back button {
+        background-color: #79adcc;
+        color: #dee3e4;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        width: 50%;
+        text-align: center;
+    }
+
+    .flashcard-back button:hover {
+        background-color: #219ebc;
+    }
+
+    .flashcard-front {
+        background-color: #e0e1dd;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+    }
+
+    .flashcard-front button {
+        background-color: #79adcc;
+        color: #dee3e4;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        width: 50%;
+        text-align: center;
+    }
+
+    .flashcard-front button:hover {
+        background-color: #219ebc;
+    }
 </style>

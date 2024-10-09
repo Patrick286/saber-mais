@@ -1,7 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import UserLogin from '../views/UserLogin.vue';
 import UserRegister from '../views/UserRegister.vue';
-import Dashboard from '../views/Dashboard.vue';
+import saberMais from '../views/saberMais.vue';
+import NovoDashboard from '../views/NovoDashboard.vue';
 
 function isAuthenticated() {
   // Verifica se o usuário está autenticado
@@ -15,6 +16,11 @@ const routes = [
     component: UserLogin,
   },
   {
+    path: '/sabermais',
+    name: 'saberMais',
+    component: saberMais,
+  },
+  {
     path: '/register',
     name: 'UserRegister',
     component: UserRegister,
@@ -26,7 +32,7 @@ const routes = [
   {
     path: '/dashboard',
     name: 'Dashboard',
-    component: Dashboard,
+    component: NovoDashboard,
     beforeEnter: (to, from, next) => {
       if (isAuthenticated()) {
         next();

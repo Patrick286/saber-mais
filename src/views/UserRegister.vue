@@ -1,34 +1,28 @@
 <template>
-  <div class="register-container">
-    <div class="register-box">
-      <h2>Registrar</h2>
+  <body>
+    <h1 class="logo">Saber+</h1>
+    <div class="container">
       <form @submit.prevent="handleRegister">
-        <div class="textbox">
-          <input type="text" v-model="fullName" placeholder="Nome Completo" required />
-        </div>
-        <div class="textbox">
-          <input type="email" v-model="email" placeholder="Email" required />
-        </div>
-        <div class="textbox">
-          <input type="date" v-model="birthdate" required />
-        </div>
-        <div class="textbox">
-          <input type="text" v-model="college" placeholder="Faculdade" required />
-        </div>
-        <div class="textbox">
-          <input type="text" v-model="course" placeholder="O que está cursando" required />
-        </div>
-        <div class="textbox">
-          <input type="password" v-model="password" placeholder="Senha" required />
-        </div>
+        <div class="register-title">Registrar</div>
+        <label for="nome-completo">Nome completo</label>
+        <input type="text" id="nome-completo" v-model="fullName">
+        <label for="data-nascimento">Data de nascimento</label>
+        <input type="date" id="data-nascimento" v-model="birthdate">
+        <label for="curso">Curso</label>
+        <input type="text" id="curso" v-model="course">
+        <label for="email">E-mail</label>
+        <input type="email" id="email" v-model="email">
+        <label for="senha">Senha</label>
+        <input type="password" id="senha" v-model="password">
         <button type="submit" class="btn btn-register">Registrar</button>
-        <router-link to="/" class="btn btn-back">Voltar</router-link>
       </form>
+      <button @click="goBack" class="back">Voltar</button>
     </div>
-  </div>
+</body>
 </template>
 
 <script>
+//<button @click="goBack" class="back-button">Voltar</button>
 export default {
   name: 'RegisterPage',
   data() {
@@ -50,7 +44,7 @@ export default {
       try {
         const formattedDate = this.formatDate(this.birthdate);
 
-        const response = await fetch('http://18.225.32.96:8080/api/user', {
+        const response = await fetch('http://localhost:8080/api/user', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -86,73 +80,131 @@ export default {
         alert('Erro ao tentar registrar');
       }
     },
+    goBack() {
+      this.$router.push('/'); // Redireciona para a página de registro
+    }
   },
 };
 </script>
 
 <style scoped>
-.register-container {
+
+@import url('https://fonts.googleapis.com/css2?family=Commissioner:wght@400;700&display=swap');
+
+body, .logo, .container label, .container input, .container button, .container .divider span, .container .forgot-password, .container .back, .container .register-title {
+  font-family: 'Commissioner', sans-serif;
+}
+
+body {
+  background-color: #0d161b;
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background-color: #f0f0f0; /* Tema claro padrão */
-}
-
-.register-box {
-  background: #fff;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  width: 300px;
-  text-align: center;
-  display: flex;
+  margin: 0;
   flex-direction: column;
-  align-items: center; /* Centraliza horizontalmente */
 }
 
-.register-box h2 {
-  margin-bottom: 1rem;
+.logo {
+  color: #becc78;
+  font-size: 72px;
+  margin-bottom: 10px;
+  text-align: center;
 }
 
-.textbox {
-  width: 100%; /* Garante que o textbox ocupe toda a largura disponível */
-  margin-bottom: 1rem;
-  display: flex;
-  justify-content: center; /* Centraliza horizontalmente */
+.container {
+  background-color: #8b7d6b;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  text-align: left;
+  width: 300px;
+  margin-bottom: 10vh;
 }
 
-.textbox input {
-  width: 100%; /* Faz com que o campo de entrada ocupe toda a largura do textbox */
-  padding: 0.8rem;
-  border: 1px solid #ddd;
-  border-radius: 3px; /* Corrige o valor do border-radius */
+.container label {
+  color: #1f272a;
+  margin-top: 10px;
+  display: block;
+  font-weight: bold;
 }
 
-.btn {
+.container input[type="text"],
+.container input[type="email"],
+.container input[type="password"],
+.container input[type="date"] {
   width: 100%;
-  padding: 0.8rem;
+  padding: 10px;
+  margin: 5px 0 10px 0;
   border: none;
+  border-radius: 5px;
+  box-sizing: border-box;
+  background-color: #dee3e4;
+}
+
+.container button {
+  background-color: #6b7d4b;
   color: white;
-  border-radius: 4px;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
   cursor: pointer;
-  font-size: 1rem;
+  width: 100%;
+  margin: 10px 0;
 }
 
-.btn-register {
-  background-color: #007bff;
-  margin-bottom: 1rem; /* Espaçamento entre botões */
+.container .divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 20px 0;
 }
 
-.btn-register:hover {
-  background-color: #0056b3;
+.container .divider::before,
+.container .divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 2px solid #6b4b3b;
 }
 
-.btn-back {
-  background-color: #6c757d;
+.container .divider::before {
+  margin-right: 10px;
 }
 
-.btn-back:hover {
-  background-color: #5a6268;
+.container .divider::after {
+  margin-left: 10px;
 }
+
+.container .divider span {
+  color: #404950;
+}
+
+.container .forgot-password {
+  background: none;
+  color: #bbbcaf;
+  padding: 5px;
+  border: none;
+  cursor: pointer;
+  margin-top: 10px;
+  width: auto;
+}
+
+.container .back {
+  background-color: #4d5040;
+  color: #bbbcaf;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.container .register-title {
+  color: #1f272a;
+  margin-bottom: 10px;
+  font-size: 18px;
+  text-align: center;
+  font-weight: bold;
+}
+
 </style>
