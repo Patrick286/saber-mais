@@ -304,7 +304,7 @@ async loadFlashcardsBasedOnTime() {
       });
     },
     carregarFlashcards() {
-  axios.get('http://localhost:8080/api/flashcards')
+  axios.get('http://3.138.85.177:8080/api/flashcards')
     .then(response => {
       this.flashcardsFromAPI = response.data; // Armazena todos os flashcards recebidos da API
       console.log('Flashcards carregados do banco de dados:', this.flashcardsFromAPI);
