@@ -98,7 +98,7 @@ export default {
   
   data() {
     return {
-      inactivityTimeout: 15 * 60 * 1000, // 15 minutos de inatividade
+      inactivityTimeout: 60 * 60 * 1000, // 15 minutos de inatividade
       showSimulado: false,
       showSummary: false,
       showAtividades: false,
@@ -259,7 +259,7 @@ calculateFlashcardsToShow() {
   const elapsedMinutes = this.getElapsedTimeInMinutes();
 
   // Um flashcard a cada 15 minutos, portanto divida os minutos por 15
-  const flashcardsToShow = Math.floor(elapsedMinutes / 1);
+  const flashcardsToShow = Math.floor(elapsedMinutes / 15);
   
   // Limite para não passar do total de flashcards
   return Math.min(flashcardsToShow, this.limiteFlashcards);
@@ -277,9 +277,9 @@ resetFlashcards() {
 async loadFlashcardsBasedOnTime() {
   const elapsedMinutes = await this.getElapsedTimeInMinutes();
 
-  // Verifica se o navegador foi fechado por mais de 1 minuto
-  if (elapsedMinutes >= 1) {
-    const flashcardsToShow = Math.floor(elapsedMinutes / 1); // Carregar um flashcard por minuto
+  // Verifica se o navegador foi fechado por mais de 15 minuto
+  if (elapsedMinutes >= 15) {
+    const flashcardsToShow = Math.floor(elapsedMinutes / 15); // Carregar um flashcard a cada 15 minutos
     location.reload()
     
     // Limite para não passar do total de flashcards
@@ -304,7 +304,7 @@ async loadFlashcardsBasedOnTime() {
       });
     },
     carregarFlashcards() {
-  axios.get('http://localhost:8080/api/flashcards')
+  axios.get('http://3.138.85.177:8080/api/flashcards')
     .then(response => {
       this.flashcardsFromAPI = response.data; // Armazena todos os flashcards recebidos da API
       console.log('Flashcards carregados do banco de dados:', this.flashcardsFromAPI);
@@ -322,7 +322,7 @@ async loadFlashcardsBasedOnTime() {
     checkSimuladoStatus() {
       const userEmail = localStorage.getItem('email'); // Obtém o email do usuário
       if (userEmail) {
-        axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`)
+        axios.get(`http://3.138.85.177:8080/api/user/by-email?email=${userEmail}`)
           .then((response) => {
             const { simuladosUmRealizado } = response.data;
             this.userActivities.simuladosUmRealizado = simuladosUmRealizado;
@@ -343,7 +343,7 @@ async loadFlashcardsBasedOnTime() {
     const storedNextFlashcardTime = localStorage.getItem('nextFlashcardTime');
     const currentTime = Date.now();
     
-    let timeUntilNextFlashcard = 60000; // 15 minutos de intervalo por padrão
+    let timeUntilNextFlashcard = 900000; // 15 minutos de intervalo por padrão
 
     // Se existir um tempo armazenado no localStorage, calcule o tempo restante
     if (storedNextFlashcardTime) {
@@ -358,7 +358,7 @@ async loadFlashcardsBasedOnTime() {
       this.loadNextFlashcard(); // Função para carregar o próximo flashcard
 
       // Defina um novo tempo para o próximo flashcard
-      const newNextFlashcardTime = Date.now() + 60000; // Próximo intervalo de 15 minutos
+      const newNextFlashcardTime = Date.now() + 900000; // Próximo intervalo de 15 minutos
       localStorage.setItem('nextFlashcardTime', newNextFlashcardTime);
 
       // Continue chamando o intervalo após exibir um flashcard
@@ -436,7 +436,7 @@ loadNextFlashcard() {
     // Verifique se o 1º Simulado foi realizado
     if (this.userActivities.simuladosUmRealizado === 1) {
       // Requisição GET para pegar os dados do flashcard do usuário
-      axios.get(`http://localhost:8080/api/flashcards/?id=${flashcardId}`)
+      axios.get(`http://3.138.85.177:8080/api/flashcards/?id=${flashcardId}`)
         .then((response) => {
           const { id, enunciado, resposta } = response.data;
 
@@ -447,7 +447,7 @@ loadNextFlashcard() {
 
           this.showBack = false;
         })
-      axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`)
+      axios.get(`http://3.138.85.177:8080/api/user/by-email?email=${userEmail}`)
         .then((response) => {
           console.log('Dados do flashcard:', response.data);
           const { flashcardLembrei, flashcardQuaseNaoLembrei, flashcardNaoLembrei } = response.data;
@@ -508,7 +508,7 @@ loadNextFlashcard() {
 
   if (userEmail && key) {
     // Requisição PUT para atualizar o campo correspondente no banco de dados
-    axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
+    axios.put(`http://3.138.85.177:8080/api/user/updateField?email=${userEmail}`, {
       chave: key,
       valor: value.toString(), // Incrementa o valor
     })
@@ -545,7 +545,7 @@ loadNextFlashcard() {
     const userEmail = localStorage.getItem('email');
 
     try {
-      const response = await axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`);
+      const response = await axios.get(`http://3.138.85.177:8080/api/user/by-email?email=${userEmail}`);
       const userData = response.data;
 
       // Armazenando os dados do 1º Simulado
@@ -571,7 +571,7 @@ loadNextFlashcard() {
     const userEmail = localStorage.getItem('email');
 
     try {
-      const response = await axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`);
+      const response = await axios.get(`http://3.138.85.177:8080/api/user/by-email?email=${userEmail}`);
       const userData = response.data;
 
       // Armazenando os dados do 2º Simulado
@@ -639,36 +639,36 @@ loadNextFlashcard() {
       try {
         if (this.currentSimulado === 1) {
         // Atualiza simuladosUmRealizado
-        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
+        await axios.put(`http://3.138.85.177:8080/api/user/updateField?email=${userEmail}`, {
           chave: 'simuladosUmRealizado',
           valor: '1',
         });
 
         // Atualiza respostasSimuladoUmCorretas
-        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
+        await axios.put(`http://3.138.85.177:8080/api/user/updateField?email=${userEmail}`, {
           chave: 'respostasSimuladoUmCorretas',
           valor: this.correctAnswers.toString(),
         });
 
         // Atualiza respostasSimuladoUmIncorretas
-        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
+        await axios.put(`http://3.138.85.177:8080/api/user/updateField?email=${userEmail}`, {
           chave: 'respostasSimuladoUmIncorretas',
           valor: this.wrongAnswers.toString(),
         });
       } else if (this.currentSimulado === 2) {
-        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
+        await axios.put(`http://3.138.85.177:8080/api/user/updateField?email=${userEmail}`, {
           chave: 'simuladosDoisRealizado',
           valor: '1',
         });
 
         // Atualiza respostasSimuladoUmCorretas
-        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
+        await axios.put(`http://3.138.85.177:8080/api/user/updateField?email=${userEmail}`, {
           chave: 'respostasSimuladoDoisCorretas',
           valor: this.correctAnswers.toString(),
         });
 
         // Atualiza respostasSimuladoUmIncorretas
-        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
+        await axios.put(`http://3.138.85.177:8080/api/user/updateField?email=${userEmail}`, {
           chave: 'respostasSimuladoDoisIncorretas',
           valor: this.wrongAnswers.toString(),
         });
@@ -704,7 +704,7 @@ loadNextFlashcard() {
     loadUserActivities() {
   const userEmail = localStorage.getItem('email'); // Pegue o email do localStorage
   if (userEmail) {
-    axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`) // Faz a requisição GET para buscar as atividades do usuário
+    axios.get(`http://3.138.85.177:8080/api/user/by-email?email=${userEmail}`) // Faz a requisição GET para buscar as atividades do usuário
       .then((response) => {
         console.log('Resposta da API:', response.data);
         const user = response.data;
@@ -733,7 +733,7 @@ loadNextFlashcard() {
   }
 },
     fetchQuestions() {
-      axios.get(`http://localhost:8080/api/questions`) // Faz a requisição GET para o endpoint
+      axios.get(`http://3.138.85.177:8080/api/questions`) // Faz a requisição GET para o endpoint
         .then(response => {
           this.questionsFromAPI = response.data; // Armazena as questões no estado
         })
