@@ -304,7 +304,7 @@ async loadFlashcardsBasedOnTime() {
       });
     },
     carregarFlashcards() {
-  axios.get('http://3.138.85.177:8080/api/flashcards')
+  axios.get('http://localhost:8080/api/flashcards')
     .then(response => {
       this.flashcardsFromAPI = response.data; // Armazena todos os flashcards recebidos da API
       console.log('Flashcards carregados do banco de dados:', this.flashcardsFromAPI);
@@ -367,10 +367,7 @@ async loadFlashcardsBasedOnTime() {
   },
 
 loadNextFlashcard() {
-    if (this.flashcards.length >= this.limiteFlashcards || this.flashcardsFromAPI.length === 0) {
-      console.log('Todos os flashcards foram carregados ou limite atingido');
-      return;
-    }
+
 
     if (this.notRememberedFlashcards.length > 0) {
       const nextFlashcard = this.notRememberedFlashcards.shift();
