@@ -259,7 +259,7 @@ calculateFlashcardsToShow() {
   const elapsedMinutes = this.getElapsedTimeInMinutes();
 
   // Um flashcard a cada 15 minutos, portanto divida os minutos por 15
-  const flashcardsToShow = Math.floor(elapsedMinutes / 15);
+  const flashcardsToShow = Math.floor(elapsedMinutes / 1);
   
   // Limite para não passar do total de flashcards
   return Math.min(flashcardsToShow, this.limiteFlashcards);
@@ -278,8 +278,8 @@ async loadFlashcardsBasedOnTime() {
   const elapsedMinutes = await this.getElapsedTimeInMinutes();
 
   // Verifica se o navegador foi fechado por mais de 15 minuto
-  if (elapsedMinutes >= 15) {
-    const flashcardsToShow = Math.floor(elapsedMinutes / 15); // Carregar um flashcard a cada 15 minutos
+  if (elapsedMinutes >= 1) {
+    const flashcardsToShow = Math.floor(elapsedMinutes / 1); // Carregar um flashcard a cada 15 minutos
     location.reload()
     
     // Limite para não passar do total de flashcards
@@ -343,7 +343,7 @@ async loadFlashcardsBasedOnTime() {
     const storedNextFlashcardTime = localStorage.getItem('nextFlashcardTime');
     const currentTime = Date.now();
     
-    let timeUntilNextFlashcard = 900000; // 15 minutos de intervalo por padrão
+    let timeUntilNextFlashcard = 60000; // 15 minutos de intervalo por padrão
 
     // Se existir um tempo armazenado no localStorage, calcule o tempo restante
     if (storedNextFlashcardTime) {
@@ -358,7 +358,7 @@ async loadFlashcardsBasedOnTime() {
       this.loadNextFlashcard(); // Função para carregar o próximo flashcard
 
       // Defina um novo tempo para o próximo flashcard
-      const newNextFlashcardTime = Date.now() + 900000; // Próximo intervalo de 15 minutos
+      const newNextFlashcardTime = Date.now() + 60000; // Próximo intervalo de 15 minutos
       localStorage.setItem('nextFlashcardTime', newNextFlashcardTime);
 
       // Continue chamando o intervalo após exibir um flashcard
