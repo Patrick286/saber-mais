@@ -192,7 +192,7 @@ export default {
       store.put({ id: 'currentTime', value: time });
 
       transaction.oncomplete = () => {
-        console.log('Horário salvo com sucesso no IndexedDB');
+        console.log('Um minuto se passou :D');
       };
 
       transaction.onerror = () => {
@@ -231,8 +231,6 @@ export default {
   
   // Salva o horário atual no IndexedDB
   this.saveTimeToIndexedDB(this.currentTime);
-
-  console.log(`Hora atualizada: ${this.currentTime}`);
 },
 
 async getElapsedTimeInMinutes() {
@@ -287,8 +285,6 @@ async loadFlashcardsBasedOnTime() {
       this.loadNextFlashcard();
       location.reload()
     }
-  } else {
-    console.log('Navegador não foi fechado tempo suficiente para carregar novos flashcards.');
   }
 },
     scrollLeft() {
@@ -307,7 +303,6 @@ async loadFlashcardsBasedOnTime() {
   axios.get('http://3.138.85.177:8080/api/flashcards')
     .then(response => {
       this.flashcardsFromAPI = response.data; // Armazena todos os flashcards recebidos da API
-      console.log('Flashcards carregados do banco de dados:', this.flashcardsFromAPI);
       this.limiteFlashcards = this.flashcardsFromAPI.length;
       
       // Se o número de flashcards carregados for maior que o limite, ajusta o array
@@ -368,7 +363,6 @@ async loadFlashcardsBasedOnTime() {
 
 loadNextFlashcard() {
     if (this.flashcards.length >= this.limiteFlashcards || this.flashcardsFromAPI.length === 0) {
-      console.log('Todos os flashcards foram carregados ou limite atingido');
       return;
     }
 
@@ -376,7 +370,6 @@ loadNextFlashcard() {
       const nextFlashcard = this.notRememberedFlashcards.shift();
       this.flashcards.push(nextFlashcard);
       this.saveNotRememberedFlashcardsToLocalStorage();
-      console.log('Flashcard não lembrado carregado:', nextFlashcard);
       return;
     }
 
@@ -386,12 +379,10 @@ loadNextFlashcard() {
     this.flashcards.push(nextFlashcard);
     this.saveFlashcardsToLocalStorage();
     this.flashcardsFromAPI.splice(randomIndex, 1);
-    console.log('Flashcard carregado:', nextFlashcard);
   },
 
     saveFlashcardsToLocalStorage() {
       localStorage.setItem('flash', JSON.stringify(this.flashcards));
-      console.log('LocalStorage "flash" atualizado:', JSON.parse(localStorage.getItem('flash')));
     },
 
     loadFlashcardsFromLocalStorage() {
@@ -400,7 +391,6 @@ loadNextFlashcard() {
         this.flashcards = JSON.parse(storedFlashcards);
         
       }
-      console.log('LocalStorage "flash":', JSON.parse(localStorage.getItem('flash')));
     },
     
     getAvailableFlashcards() {
@@ -449,7 +439,6 @@ loadNextFlashcard() {
         })
       axios.get(`http://3.138.85.177:8080/api/user/by-email?email=${userEmail}`)
         .then((response) => {
-          console.log('Dados do flashcard:', response.data);
           const { flashcardLembrei, flashcardQuaseNaoLembrei, flashcardNaoLembrei } = response.data;
           
           // Armazene os valores no localStorage
@@ -673,9 +662,6 @@ loadNextFlashcard() {
           valor: this.wrongAnswers.toString(),
         });
       }
-
-        console.log('Dados do simulado atualizados com sucesso!');
-
       } catch (error) {
         console.error('Erro ao atualizar os dados do simulado:', error);
       }
@@ -683,7 +669,6 @@ loadNextFlashcard() {
       // Exibe o resumo do simulado
       this.showSimulado = false;
       this.showSummary = true;
-      console.log('Respostas:', this.userAnswers);
     },
     desistirSimulado() {
       if (confirm('Tem certeza de que deseja desistir do simulado?')) {
@@ -706,7 +691,6 @@ loadNextFlashcard() {
   if (userEmail) {
     axios.get(`http://3.138.85.177:8080/api/user/by-email?email=${userEmail}`) // Faz a requisição GET para buscar as atividades do usuário
       .then((response) => {
-        console.log('Resposta da API:', response.data);
         const user = response.data;
         if (user) {
           // Atualizando as atividades do usuário no estado do componente
