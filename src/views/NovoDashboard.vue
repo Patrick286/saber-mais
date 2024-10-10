@@ -280,12 +280,10 @@ async loadFlashcardsBasedOnTime() {
   // Verifica se o navegador foi fechado por mais de 15 minuto
   if (elapsedMinutes >= 1) {
     const flashcardsToShow = Math.floor(elapsedMinutes / 1); // Carregar um flashcard a cada 15 minutos
-    location.reload()
     
     // Limite para não passar do total de flashcards
     for (let i = 0; i < Math.min(flashcardsToShow, this.limiteFlashcards); i++) {
       this.loadNextFlashcard();
-      location.reload()
     }
   } else {
     console.log('Navegador não foi fechado tempo suficiente para carregar novos flashcards.');
