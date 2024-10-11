@@ -169,26 +169,20 @@ export default {
 
   methods: {
     loadFlashcardsBasedOnTimeDifference() {
-  const timeDifference = this.calculateTimeDifference();
-  if (this.lastTimeDifferenceCalculation !== null && timeDifference <= this.lastTimeDifferenceCalculation) {
-    return;
-  }
-  this.lastTimeDifferenceCalculation = timeDifference;
+    const timeDifference = this.calculateTimeDifference();
+    const flashcardsToLoad = timeDifference;
 
-  const flashcardsToLoad = Math.min(timeDifference, this.limiteFlashcards - this.flashcards.length);
+    // Verifica se já existem flashcards armazenados no localstorage
+    const storedFlashcards = localStorage.getItem('flash');
+    if (storedFlashcards) {
+      this.flashcards = JSON.parse(storedFlashcards);
+    }
 
-  // Verifica se já existem flashcards armazenados no localstorage
-  const storedFlashcards = localStorage.getItem('flash');
-  if (storedFlashcards) {
-    this.flashcards = JSON.parse(storedFlashcards);
-  }
-
-  // Carrega os flashcards adicionais com base no tempo decorrido
-  for (let i = 0; i < flashcardsToLoad; i++) {
-    this.loadNextFlashcard();
-  }
-  this.updateLastExit();
-},
+    // Carrega os flashcards adicionais com base no tempo decorrido
+    for (let i = 0; i < flashcardsToLoad; i++) {
+      this.loadNextFlashcard();
+    }
+  },
     calculateTimeDifference() {
       const lastExitTime = localStorage.getItem('ultima_saida_hora');
       const currentTime = this.updateCurrentTime();
@@ -268,7 +262,6 @@ export default {
   axios.get(`${API_URL}/flashcards`)
     .then(response => {
       this.flashcardsFromAPI = response.data; // Armazena todos os flashcards recebidos da API
-      console.log('Flashcards carregados do banco de dados:', this.flashcardsFromAPI);
       this.limiteFlashcards = this.flashcardsFromAPI.length;
       
       // Se o número de flashcards carregados for maior que o limite, ajusta o array
@@ -312,12 +305,6 @@ export default {
     if (timeUntilNextFlashcard < 0) {
       timeUntilNextFlashcard = 0; // Se o tempo já passou, exibir imediatamente o próximo flashcard
     }
-  }
-
-  // Verifica se o tempo decorrido é maior que o intervalo de tempo definido
-  const timeDifference = this.calculateTimeDifference();
-  if (timeDifference > timeUntilNextFlashcard / 60000) {
-    this.loadFlashcardsBasedOnTimeDifference();
   }
 
   setTimeout(() => {
@@ -672,7 +659,6 @@ loadNextFlashcard() {
   if (userEmail) {
     axios.get(`${API_URL}/user/by-email?email=${userEmail}`) // Faz a requisição GET para buscar as atividades do usuário
       .then((response) => {
-        console.log('Resposta da API:', response.data);
         const user = response.data;
         if (user) {
           // Atualizando as atividades do usuário no estado do componente
