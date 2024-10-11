@@ -93,7 +93,7 @@
 <script>
 import axios from 'axios'; // Importa o axios
 
-const API_URL = 'http://localhost:8080/api';
+const API_URL = 'http://3.138.85.177:8080/api';
 const TIME_INTERVAL = 30000; // 10 segundos
 const MAX_FLASHCARDS = 90;
 
