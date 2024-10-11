@@ -186,7 +186,6 @@ export default {
   // Carrega os flashcards adicionais com base no tempo decorrido
   for (let i = 0; i < flashcardsToLoad; i++) {
     this.loadNextFlashcard();
-    location.reload();
   }
   this.updateLastExit();
 },
