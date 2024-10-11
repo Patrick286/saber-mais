@@ -93,7 +93,7 @@
 <script>
 import axios from 'axios'; // Importa o axios
 
-const API_URL = 'http://3.138.85.177:8080/api';
+const API_URL = 'http://localhost:8080/api';
 const TIME_INTERVAL = 30000; // 10 segundos
 const MAX_FLASHCARDS = 90;
 
@@ -159,8 +159,10 @@ export default {
   this.loadFlashcardsFromLocalStorage();
   this.loadNotRememberedFlashcards();
   this.startUpdateLastExit();
+  this.startUpdateCurrentTime();
   this.getUserLastExitTimeInterval(); // Atualiza a última saída antes de atualizar a hora atual
   setTimeout(() => {
+    this.calculateTimeDifference();
     this.loadFlashcardsBasedOnTimeDifference();
   }, 100); // aguarda 100ms para garantir que a última saída foi atualizada
 },
@@ -184,45 +186,37 @@ export default {
   // Carrega os flashcards adicionais com base no tempo decorrido
   for (let i = 0; i < flashcardsToLoad; i++) {
     this.loadNextFlashcard();
-    location.reload();
   }
   this.updateLastExit();
+  location.reload();
 },
     calculateTimeDifference() {
       const lastExitTime = localStorage.getItem('ultima_saida_hora');
       const currentTime = this.updateCurrentTime();
       if (lastExitTime && currentTime) {
         const differenceInMinutes = this.getMinutesDifference(lastExitTime, currentTime);
+        console.log(`Diferença de tempo: ${differenceInMinutes} minutos.`);
         return differenceInMinutes;
       } else {
         console.error('Erro ao calcular a diferença de tempo.');
       }
     },
     getMinutesDifference(lastTime, currentTime) {
-    try {
       const lastExitDate = new Date(`1970-01-01T${lastTime}:00`);
       const currentDate = new Date(`1970-01-01T${currentTime}:00`);
       const diffMs = currentDate - lastExitDate;
       return Math.floor(diffMs / 60000);
-    } catch (error) {
-      console.error('Erro ao calcular a diferença de tempo:', error);
-    }
-  },
-  updateLastExit() {
-    try {
+    },
+    updateLastExit() {
       const userEmail = localStorage.getItem('email');
       if (userEmail) {
         axios.put(`${API_URL}/user/update-last-exit?email=${userEmail}`)
           .then(() => console.log('Última saída atualizada'))
           .catch(error => console.error('Erro ao atualizar última saída:', error));
       }
-    } catch (error) {
-      console.error('Erro ao atualizar última saída:', error);
-    }
-  },
+    },
 
-  updateCurrentTime() {
-    try {
+    updateCurrentTime() {
       const now = new Date();
       now.setHours(now.getHours() + 3);
       const horas = now.getHours().toString().padStart(2, '0');
@@ -230,30 +224,18 @@ export default {
       const horaMinuto = `${horas}:${minutos}`;
       console.log(`Hora atual: ${horaMinuto}`);
       return horaMinuto;
-    } catch (error) {
-      console.error('Erro ao atualizar hora atual:', error);
-    }
-  },
+    },
 
-  startUpdateLastExit() {
-    try {
+    startUpdateLastExit() {
       this.getUserLastExitTime();
       setInterval(this.updateLastExit, TIME_INTERVAL);
-    } catch (error) {
-      console.error('Erro ao iniciar atualização de última saída:', error);
-    }
-  },
+    },
 
-  startUpdateCurrentTime() {
-    try {
+    startUpdateCurrentTime() {
       setInterval(this.updateCurrentTime, TIME_INTERVAL);
-    } catch (error) {
-      console.error('Erro ao iniciar atualização de hora atual:', error);
-    }
-  },
+    },
 
-  getUserLastExitTime() {
-    try {
+    getUserLastExitTime() {
       const userEmail = localStorage.getItem('email');
       if (userEmail) {
         axios.get(`${API_URL}/user/by-email?email=${userEmail}`)
@@ -267,17 +249,10 @@ export default {
           })
           .catch(error => console.error('Erro ao obter última saída:', error));
       }
-    } catch (error) {
-      console.error ('Erro ao obter última saída:', error);
-    }
-  },
-  getUserLastExitTimeInterval() {
-    try {
+    },
+    getUserLastExitTimeInterval() {
       setInterval(this.getUserLastExitTime, TIME_INTERVAL);
-    } catch (error) {
-      console.error('Erro ao iniciar intervalo de última saída:', error);
-    }
-  },
+    },
     scrollLeft() {
       document.getElementById('cards').scrollBy({
         left: -150,
@@ -291,7 +266,7 @@ export default {
       });
     },
     carregarFlashcards() {
-  axios.get('http://3.138.85.177:8080/api/flashcards')
+  axios.get('http://localhost:8080/api/flashcards')
     .then(response => {
       this.flashcardsFromAPI = response.data; // Armazena todos os flashcards recebidos da API
       console.log('Flashcards carregados do banco de dados:', this.flashcardsFromAPI);
@@ -309,7 +284,7 @@ export default {
     checkSimuladoStatus() {
       const userEmail = localStorage.getItem('email'); // Obtém o email do usuário
       if (userEmail) {
-        axios.get(`http://3.138.85.177:8080/api/user/by-email?email=${userEmail}`)
+        axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`)
           .then((response) => {
             const { simuladosUmRealizado } = response.data;
             this.userActivities.simuladosUmRealizado = simuladosUmRealizado;
@@ -428,7 +403,7 @@ loadNextFlashcard() {
     // Verifique se o 1º Simulado foi realizado
     if (this.userActivities.simuladosUmRealizado === 1) {
       // Requisição GET para pegar os dados do flashcard do usuário
-      axios.get(`http://3.138.85.177:8080/api/flashcards/?id=${flashcardId}`)
+      axios.get(`http://localhost:8080/api/flashcards/?id=${flashcardId}`)
         .then((response) => {
           const { id, enunciado, resposta } = response.data;
 
@@ -439,7 +414,7 @@ loadNextFlashcard() {
 
           this.showBack = false;
         })
-      axios.get(`http://3.138.85.177:8080/api/user/by-email?email=${userEmail}`)
+      axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`)
         .then((response) => {
           console.log('Dados do flashcard:', response.data);
           const { flashcardLembrei, flashcardQuaseNaoLembrei, flashcardNaoLembrei } = response.data;
@@ -500,7 +475,7 @@ loadNextFlashcard() {
 
   if (userEmail && key) {
     // Requisição PUT para atualizar o campo correspondente no banco de dados
-    axios.put(`http://3.138.85.177:8080/api/user/updateField?email=${userEmail}`, {
+    axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
       chave: key,
       valor: value.toString(), // Incrementa o valor
     })
@@ -537,7 +512,7 @@ loadNextFlashcard() {
     const userEmail = localStorage.getItem('email');
 
     try {
-      const response = await axios.get(`http://3.138.85.177:8080/api/user/by-email?email=${userEmail}`);
+      const response = await axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`);
       const userData = response.data;
 
       // Armazenando os dados do 1º Simulado
@@ -563,7 +538,7 @@ loadNextFlashcard() {
     const userEmail = localStorage.getItem('email');
 
     try {
-      const response = await axios.get(`http://3.138.85.177:8080/api/user/by-email?email=${userEmail}`);
+      const response = await axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`);
       const userData = response.data;
 
       // Armazenando os dados do 2º Simulado
@@ -631,36 +606,36 @@ loadNextFlashcard() {
       try {
         if (this.currentSimulado === 1) {
         // Atualiza simuladosUmRealizado
-        await axios.put(`http://3.138.85.177:8080/api/user/updateField?email=${userEmail}`, {
+        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
           chave: 'simuladosUmRealizado',
           valor: '1',
         });
 
         // Atualiza respostasSimuladoUmCorretas
-        await axios.put(`http://3.138.85.177:8080/api/user/updateField?email=${userEmail}`, {
+        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
           chave: 'respostasSimuladoUmCorretas',
           valor: this.correctAnswers.toString(),
         });
 
         // Atualiza respostasSimuladoUmIncorretas
-        await axios.put(`http://3.138.85.177:8080/api/user/updateField?email=${userEmail}`, {
+        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
           chave: 'respostasSimuladoUmIncorretas',
           valor: this.wrongAnswers.toString(),
         });
       } else if (this.currentSimulado === 2) {
-        await axios.put(`http://3.138.85.177:8080/api/user/updateField?email=${userEmail}`, {
+        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
           chave: 'simuladosDoisRealizado',
           valor: '1',
         });
 
         // Atualiza respostasSimuladoUmCorretas
-        await axios.put(`http://3.138.85.177:8080/api/user/updateField?email=${userEmail}`, {
+        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
           chave: 'respostasSimuladoDoisCorretas',
           valor: this.correctAnswers.toString(),
         });
 
         // Atualiza respostasSimuladoUmIncorretas
-        await axios.put(`http://3.138.85.177:8080/api/user/updateField?email=${userEmail}`, {
+        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
           chave: 'respostasSimuladoDoisIncorretas',
           valor: this.wrongAnswers.toString(),
         });
@@ -696,7 +671,7 @@ loadNextFlashcard() {
     loadUserActivities() {
   const userEmail = localStorage.getItem('email'); // Pegue o email do localStorage
   if (userEmail) {
-    axios.get(`http://3.138.85.177:8080/api/user/by-email?email=${userEmail}`) // Faz a requisição GET para buscar as atividades do usuário
+    axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`) // Faz a requisição GET para buscar as atividades do usuário
       .then((response) => {
         console.log('Resposta da API:', response.data);
         const user = response.data;
@@ -725,7 +700,7 @@ loadNextFlashcard() {
   }
 },
     fetchQuestions() {
-      axios.get(`http://3.138.85.177:8080/api/questions`) // Faz a requisição GET para o endpoint
+      axios.get(`http://localhost:8080/api/questions`) // Faz a requisição GET para o endpoint
         .then(response => {
           this.questionsFromAPI = response.data; // Armazena as questões no estado
         })
@@ -976,20 +951,20 @@ loadNextFlashcard() {
     }
 
     .flashcard-popup {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    z-index: 101;
-    width: 90%; /* Ajustado para ser responsivo */
-    max-width: 500px; /* Limitar tamanho máximo */
-    max-height: 80vh; /* Altura máxima relativa à tela */
-    overflow-y: auto; /* Permitir rolagem se necessário */
-    text-align: justify;
-    padding: 20px; /* Espaçamento interno */
-}
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        z-index: 101;
+        width: 30%;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow-y: auto;
+        text-align: justify;
+    }
 
     .flashcard-popup .question-box {
         margin-bottom: 1rem;
@@ -1016,19 +991,7 @@ loadNextFlashcard() {
         text-align: left;
         transition: background-color 0.3s;
     }
-    /* Para telas muito pequenas */
-@media (max-width: 600px) {
-    .flashcard-popup {
-        width: 95%; /* Mais largura em telas pequenas */
-        max-width: none; /* Remove o limite máximo */
-        padding: 15px;
-    }
 
-    .flashcard-popup .flashcard-front button, 
-    .flashcard-popup .flashcard-back button {
-        width: 80%; /* Botões ocupando toda a largura no celular */
-    }
-}
     /* Estilo geral do Pop-up */
 .atividades-popup {
     position: fixed;
