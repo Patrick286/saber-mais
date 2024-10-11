@@ -188,7 +188,6 @@ export default {
     this.loadNextFlashcard();
   }
   this.updateLastExit();
-  location.reload();
 },
     calculateTimeDifference() {
       const lastExitTime = localStorage.getItem('ultima_saida_hora');
