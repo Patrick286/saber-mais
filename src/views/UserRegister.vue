@@ -44,7 +44,7 @@ export default {
       try {
         const formattedDate = this.formatDate(this.birthdate);
 
-        const response = await fetch('http://3.138.85.177:8080/api/user', {
+        const response = await fetch('http://localhost:8080/api/user', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -61,7 +61,6 @@ export default {
             respostasSimuladoUmIncorretas: 0,
             flashcardsRealizados: 0,
             flashcardLembrei: 0,
-            flashcardQuaseNaoLembrei: 0,
             flashcardNaoLembrei: 0,
             simuladosDoisRealizado: 0,
             respostasSimuladoDoisCorretas: 0,

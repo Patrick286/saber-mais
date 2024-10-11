@@ -93,6 +93,10 @@
 <script>
 import axios from 'axios'; // Importa o axios
 
+const API_URL = 'http://localhost:8080/api';
+const TIME_INTERVAL = 30000; // 10 segundos
+const MAX_FLASHCARDS = 90;
+
 export default {
   name: 'UserDashboard',
   
@@ -127,9 +131,10 @@ export default {
       questionsFromAPI: [], // Armazena as questões vindas da API
       flashcardsFromAPI: [],
       currentSimulado: null,
-      limiteFlashcards: 0,
+      limiteFlashcards: MAX_FLASHCARDS,
       notRememberedFlashcards: [],
-      currentTime: ''
+      currentTime: '',
+      lastTimeDifferenceCalculation: null,
     };
   },
   computed: {
@@ -149,148 +154,130 @@ export default {
   },
 
   mounted() {
-    this.checkSimuladoStatus();
-    this.carregarFlashcards();
-    this.loadFlashcardsFromLocalStorage();
-    this.loadNotRememberedFlashcards();
-    this.loadFlashcardsBasedOnTime();
-
-    this.updateTime(); // Chama o método assim que o componente é montado
-    setInterval(this.updateTime, 60000); // Atualiza a cada 60 segundos
-  },
+  this.checkSimuladoStatus();
+  this.carregarFlashcards();
+  this.loadFlashcardsFromLocalStorage();
+  this.loadNotRememberedFlashcards();
+  this.startUpdateLastExit();
+  this.getUserLastExitTimeInterval(); // Atualiza a última saída antes de atualizar a hora atual
+  setTimeout(() => {
+    this.loadFlashcardsBasedOnTimeDifference();
+  }, 100); // aguarda 100ms para garantir que a última saída foi atualizada
+},
 
   methods: {
-    openDatabase() {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open('FlashcardApp', 1); // Abre ou cria o banco de dados
+    loadFlashcardsBasedOnTimeDifference() {
+  const timeDifference = this.calculateTimeDifference();
+  if (this.lastTimeDifferenceCalculation !== null && timeDifference <= this.lastTimeDifferenceCalculation) {
+    return;
+  }
+  this.lastTimeDifferenceCalculation = timeDifference;
 
-      request.onupgradeneeded = function(event) {
-        const db = event.target.result;
-        if (!db.objectStoreNames.contains('timeStore')) {
-          db.createObjectStore('timeStore', { keyPath: 'id' }); // Cria uma store com chave primária 'id'
-        }
-      };
+  const flashcardsToLoad = Math.min(timeDifference, this.limiteFlashcards - this.flashcards.length);
 
-      request.onsuccess = function(event) {
-        const db = event.target.result;
-        resolve(db);
-      };
-
-      request.onerror = function(event) {
-        console.error('Erro ao abrir IndexedDB:', event.target.errorCode);
-        reject(event.target.errorCode);
-      };
-    });
-  },
-  
-  saveTimeToIndexedDB(time) {
-    this.openDatabase().then((db) => {
-      const transaction = db.transaction(['timeStore'], 'readwrite');
-      const store = transaction.objectStore('timeStore');
-
-      // Adiciona ou atualiza o horário no banco de dados
-      store.put({ id: 'currentTime', value: time });
-
-      transaction.oncomplete = () => {
-        console.log('Horário salvo com sucesso no IndexedDB');
-      };
-
-      transaction.onerror = () => {
-        console.error('Erro ao salvar horário no IndexedDB');
-      };
-    });
-  },
-  
-  getTimeFromIndexedDB() {
-    return new Promise((resolve, reject) => {
-      this.openDatabase().then((db) => {
-        const transaction = db.transaction(['timeStore'], 'readonly');
-        const store = transaction.objectStore('timeStore');
-
-        const request = store.get('currentTime');
-
-        request.onsuccess = () => {
-          if (request.result) {
-            resolve(request.result.value);
-          } else {
-            resolve(null); // Nenhum horário salvo
-          }
-        };
-
-        request.onerror = () => {
-          reject('Erro ao obter o horário do IndexedDB');
-        };
-      });
-    });
-  },
-  updateTime() {
-  const now = new Date();
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
-  this.currentTime = `${hours}:${minutes}`;
-  
-  // Salva o horário atual no IndexedDB
-  this.saveTimeToIndexedDB(this.currentTime);
-
-  console.log(`Hora atualizada: ${this.currentTime}`);
-},
-
-async getElapsedTimeInMinutes() {
-  const lastResetTime = await this.getTimeFromIndexedDB(); // Obtém o último horário salvo no IndexedDB
-  const currentTime = this.currentTime; // Pega o horário atualizado
-
-  if (!lastResetTime || !currentTime) {
-    return 0; // Se não houver tempo salvo, retorna 0
+  // Verifica se já existem flashcards armazenados no localstorage
+  const storedFlashcards = localStorage.getItem('flash');
+  if (storedFlashcards) {
+    this.flashcards = JSON.parse(storedFlashcards);
   }
 
-  const [lastResetHours, lastResetMinutes] = lastResetTime.split(':').map(Number);
-  const [currentHours, currentMinutes] = currentTime.split(':').map(Number);
-
-  const lastResetDate = new Date();
-  lastResetDate.setHours(lastResetHours, lastResetMinutes, 0, 0);
-
-  const currentDate = new Date();
-  currentDate.setHours(currentHours, currentMinutes, 0, 0);
-
-  const elapsedTime = currentDate - lastResetDate;
-  return Math.floor(elapsedTime / (1000 * 60)); // Converte para minutos
+  // Carrega os flashcards adicionais com base no tempo decorrido
+  for (let i = 0; i < flashcardsToLoad; i++) {
+    this.loadNextFlashcard();
+    location.reload();
+  }
+  this.updateLastExit();
 },
-calculateFlashcardsToShow() {
-  const elapsedMinutes = this.getElapsedTimeInMinutes();
-
-  // Um flashcard a cada 15 minutos, portanto divida os minutos por 15
-  const flashcardsToShow = Math.floor(elapsedMinutes / 1);
-  
-  // Limite para não passar do total de flashcards
-  return Math.min(flashcardsToShow, this.limiteFlashcards);
-},
-
-resetFlashcards() {
-  // Armazena a hora atual como o último reset
-  this.updateTime(); // Chama o updateTime para atualizar o tempo
-  localStorage.setItem('lastResetTime', this.currentTime); // Armazena o horário atual como último reset
-
-  // Reseta o progresso dos flashcards
-  this.flashcards = [];
-},
-
-async loadFlashcardsBasedOnTime() {
-  const elapsedMinutes = await this.getElapsedTimeInMinutes();
-
-  // Verifica se o navegador foi fechado por mais de 15 minuto
-  if (elapsedMinutes >= 1) {
-    const flashcardsToShow = Math.floor(elapsedMinutes / 1); // Carregar um flashcard a cada 15 minutos
-    location.reload()
-    
-    // Limite para não passar do total de flashcards
-    for (let i = 0; i < Math.min(flashcardsToShow, this.limiteFlashcards); i++) {
-      this.loadNextFlashcard();
-      location.reload()
+    calculateTimeDifference() {
+      const lastExitTime = localStorage.getItem('ultima_saida_hora');
+      const currentTime = this.updateCurrentTime();
+      if (lastExitTime && currentTime) {
+        const differenceInMinutes = this.getMinutesDifference(lastExitTime, currentTime);
+        return differenceInMinutes;
+      } else {
+        console.error('Erro ao calcular a diferença de tempo.');
+      }
+    },
+    getMinutesDifference(lastTime, currentTime) {
+    try {
+      const lastExitDate = new Date(`1970-01-01T${lastTime}:00`);
+      const currentDate = new Date(`1970-01-01T${currentTime}:00`);
+      const diffMs = currentDate - lastExitDate;
+      return Math.floor(diffMs / 60000);
+    } catch (error) {
+      console.error('Erro ao calcular a diferença de tempo:', error);
     }
-  } else {
-    console.log('Navegador não foi fechado tempo suficiente para carregar novos flashcards.');
-  }
-},
+  },
+  updateLastExit() {
+    try {
+      const userEmail = localStorage.getItem('email');
+      if (userEmail) {
+        axios.put(`${API_URL}/user/update-last-exit?email=${userEmail}`)
+          .then(() => console.log('Última saída atualizada'))
+          .catch(error => console.error('Erro ao atualizar última saída:', error));
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar última saída:', error);
+    }
+  },
+
+  updateCurrentTime() {
+    try {
+      const now = new Date();
+      now.setHours(now.getHours() + 3);
+      const horas = now.getHours().toString().padStart(2, '0');
+      const minutos = now.getMinutes().toString().padStart(2, '0');
+      const horaMinuto = `${horas}:${minutos}`;
+      console.log(`Hora atual: ${horaMinuto}`);
+      return horaMinuto;
+    } catch (error) {
+      console.error('Erro ao atualizar hora atual:', error);
+    }
+  },
+
+  startUpdateLastExit() {
+    try {
+      this.getUserLastExitTime();
+      setInterval(this.updateLastExit, TIME_INTERVAL);
+    } catch (error) {
+      console.error('Erro ao iniciar atualização de última saída:', error);
+    }
+  },
+
+  startUpdateCurrentTime() {
+    try {
+      setInterval(this.updateCurrentTime, TIME_INTERVAL);
+    } catch (error) {
+      console.error('Erro ao iniciar atualização de hora atual:', error);
+    }
+  },
+
+  getUserLastExitTime() {
+    try {
+      const userEmail = localStorage.getItem('email');
+      if (userEmail) {
+        axios.get(`${API_URL}/user/by-email?email=${userEmail}`)
+          .then(response => {
+            const ultimaSaida = new Date(response.data.ultimaSaida);
+            const horas = ultimaSaida.getHours().toString().padStart(2, '0');
+            const minutos = ultimaSaida.getMinutes().toString().padStart(2, '0');
+            const horaMinuto = `${horas}:${minutos}`;
+            localStorage.setItem('ultima_saida_hora', horaMinuto);
+            console.log(`Última saída: ${horaMinuto}`);
+          })
+          .catch(error => console.error('Erro ao obter última saída:', error));
+      }
+    } catch (error) {
+      console.error ('Erro ao obter última saída:', error);
+    }
+  },
+  getUserLastExitTimeInterval() {
+    try {
+      setInterval(this.getUserLastExitTime, TIME_INTERVAL);
+    } catch (error) {
+      console.error('Erro ao iniciar intervalo de última saída:', error);
+    }
+  },
     scrollLeft() {
       document.getElementById('cards').scrollBy({
         left: -150,
@@ -304,7 +291,7 @@ async loadFlashcardsBasedOnTime() {
       });
     },
     carregarFlashcards() {
-  axios.get('http://3.138.85.177:8080/api/flashcards')
+  axios.get('http://localhost:8080/api/flashcards')
     .then(response => {
       this.flashcardsFromAPI = response.data; // Armazena todos os flashcards recebidos da API
       console.log('Flashcards carregados do banco de dados:', this.flashcardsFromAPI);
@@ -322,7 +309,7 @@ async loadFlashcardsBasedOnTime() {
     checkSimuladoStatus() {
       const userEmail = localStorage.getItem('email'); // Obtém o email do usuário
       if (userEmail) {
-        axios.get(`http://3.138.85.177:8080/api/user/by-email?email=${userEmail}`)
+        axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`)
           .then((response) => {
             const { simuladosUmRealizado } = response.data;
             this.userActivities.simuladosUmRealizado = simuladosUmRealizado;
@@ -340,31 +327,36 @@ async loadFlashcardsBasedOnTime() {
       }
     },
     startFlashcardInterval() {
-    const storedNextFlashcardTime = localStorage.getItem('nextFlashcardTime');
-    const currentTime = Date.now();
-    
-    let timeUntilNextFlashcard = 60000; // 15 minutos de intervalo por padrão
+  const storedNextFlashcardTime = localStorage.getItem('nextFlashcardTime');
+  const currentTime = Date.now();
+  let timeUntilNextFlashcard = 60000; // 15 minutos de intervalo por padrão
 
-    // Se existir um tempo armazenado no localStorage, calcule o tempo restante
-    if (storedNextFlashcardTime) {
-      const storedTime = parseInt(storedNextFlashcardTime, 10);
-      timeUntilNextFlashcard = storedTime - currentTime;
-      if (timeUntilNextFlashcard < 0) {
-        timeUntilNextFlashcard = 0; // Se o tempo já passou, exibir imediatamente o próximo flashcard
-      }
+  // Se existir um tempo armazenado no localStorage, calcule o tempo restante
+  if (storedNextFlashcardTime) {
+    const storedTime = parseInt(storedNextFlashcardTime, 10);
+    timeUntilNextFlashcard = storedTime - currentTime;
+    if (timeUntilNextFlashcard < 0) {
+      timeUntilNextFlashcard = 0; // Se o tempo já passou, exibir imediatamente o próximo flashcard
     }
+  }
 
-    setTimeout(() => {
-      this.loadNextFlashcard(); // Função para carregar o próximo flashcard
+  // Verifica se o tempo decorrido é maior que o intervalo de tempo definido
+  const timeDifference = this.calculateTimeDifference();
+  if (timeDifference > timeUntilNextFlashcard / 60000) {
+    this.loadFlashcardsBasedOnTimeDifference();
+  }
 
-      // Defina um novo tempo para o próximo flashcard
-      const newNextFlashcardTime = Date.now() + 60000; // Próximo intervalo de 15 minutos
-      localStorage.setItem('nextFlashcardTime', newNextFlashcardTime);
+  setTimeout(() => {
+    this.loadNextFlashcard(); // Função para carregar o próximo flashcard
 
-      // Continue chamando o intervalo após exibir um flashcard
-      this.startFlashcardInterval();
-    }, timeUntilNextFlashcard);
-  },
+    // Defina um novo tempo para o próximo flashcard
+    const newNextFlashcardTime = Date.now() + 60000; // Próximo intervalo de 15 minutos
+    localStorage.setItem('nextFlashcardTime', newNextFlashcardTime);
+
+    // Continue chamando o intervalo após exibir um flashcard
+    this.startFlashcardInterval();
+  }, timeUntilNextFlashcard);
+},
 
 loadNextFlashcard() {
     if (this.flashcards.length >= this.limiteFlashcards || this.flashcardsFromAPI.length === 0) {
@@ -436,7 +428,7 @@ loadNextFlashcard() {
     // Verifique se o 1º Simulado foi realizado
     if (this.userActivities.simuladosUmRealizado === 1) {
       // Requisição GET para pegar os dados do flashcard do usuário
-      axios.get(`http://3.138.85.177:8080/api/flashcards/?id=${flashcardId}`)
+      axios.get(`http://localhost:8080/api/flashcards/?id=${flashcardId}`)
         .then((response) => {
           const { id, enunciado, resposta } = response.data;
 
@@ -447,7 +439,7 @@ loadNextFlashcard() {
 
           this.showBack = false;
         })
-      axios.get(`http://3.138.85.177:8080/api/user/by-email?email=${userEmail}`)
+      axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`)
         .then((response) => {
           console.log('Dados do flashcard:', response.data);
           const { flashcardLembrei, flashcardQuaseNaoLembrei, flashcardNaoLembrei } = response.data;
@@ -508,7 +500,7 @@ loadNextFlashcard() {
 
   if (userEmail && key) {
     // Requisição PUT para atualizar o campo correspondente no banco de dados
-    axios.put(`http://3.138.85.177:8080/api/user/updateField?email=${userEmail}`, {
+    axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
       chave: key,
       valor: value.toString(), // Incrementa o valor
     })
@@ -545,7 +537,7 @@ loadNextFlashcard() {
     const userEmail = localStorage.getItem('email');
 
     try {
-      const response = await axios.get(`http://3.138.85.177:8080/api/user/by-email?email=${userEmail}`);
+      const response = await axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`);
       const userData = response.data;
 
       // Armazenando os dados do 1º Simulado
@@ -571,7 +563,7 @@ loadNextFlashcard() {
     const userEmail = localStorage.getItem('email');
 
     try {
-      const response = await axios.get(`http://3.138.85.177:8080/api/user/by-email?email=${userEmail}`);
+      const response = await axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`);
       const userData = response.data;
 
       // Armazenando os dados do 2º Simulado
@@ -639,36 +631,36 @@ loadNextFlashcard() {
       try {
         if (this.currentSimulado === 1) {
         // Atualiza simuladosUmRealizado
-        await axios.put(`http://3.138.85.177:8080/api/user/updateField?email=${userEmail}`, {
+        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
           chave: 'simuladosUmRealizado',
           valor: '1',
         });
 
         // Atualiza respostasSimuladoUmCorretas
-        await axios.put(`http://3.138.85.177:8080/api/user/updateField?email=${userEmail}`, {
+        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
           chave: 'respostasSimuladoUmCorretas',
           valor: this.correctAnswers.toString(),
         });
 
         // Atualiza respostasSimuladoUmIncorretas
-        await axios.put(`http://3.138.85.177:8080/api/user/updateField?email=${userEmail}`, {
+        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
           chave: 'respostasSimuladoUmIncorretas',
           valor: this.wrongAnswers.toString(),
         });
       } else if (this.currentSimulado === 2) {
-        await axios.put(`http://3.138.85.177:8080/api/user/updateField?email=${userEmail}`, {
+        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
           chave: 'simuladosDoisRealizado',
           valor: '1',
         });
 
         // Atualiza respostasSimuladoUmCorretas
-        await axios.put(`http://3.138.85.177:8080/api/user/updateField?email=${userEmail}`, {
+        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
           chave: 'respostasSimuladoDoisCorretas',
           valor: this.correctAnswers.toString(),
         });
 
         // Atualiza respostasSimuladoUmIncorretas
-        await axios.put(`http://3.138.85.177:8080/api/user/updateField?email=${userEmail}`, {
+        await axios.put(`http://localhost:8080/api/user/updateField?email=${userEmail}`, {
           chave: 'respostasSimuladoDoisIncorretas',
           valor: this.wrongAnswers.toString(),
         });
@@ -704,7 +696,7 @@ loadNextFlashcard() {
     loadUserActivities() {
   const userEmail = localStorage.getItem('email'); // Pegue o email do localStorage
   if (userEmail) {
-    axios.get(`http://3.138.85.177:8080/api/user/by-email?email=${userEmail}`) // Faz a requisição GET para buscar as atividades do usuário
+    axios.get(`http://localhost:8080/api/user/by-email?email=${userEmail}`) // Faz a requisição GET para buscar as atividades do usuário
       .then((response) => {
         console.log('Resposta da API:', response.data);
         const user = response.data;
@@ -733,7 +725,7 @@ loadNextFlashcard() {
   }
 },
     fetchQuestions() {
-      axios.get(`http://3.138.85.177:8080/api/questions`) // Faz a requisição GET para o endpoint
+      axios.get(`http://localhost:8080/api/questions`) // Faz a requisição GET para o endpoint
         .then(response => {
           this.questionsFromAPI = response.data; // Armazena as questões no estado
         })
@@ -984,20 +976,20 @@ loadNextFlashcard() {
     }
 
     .flashcard-popup {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background-color: #fff;
-        border-radius: 8px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        z-index: 101;
-        width: 30%;
-        max-width: 600px;
-        max-height: 90vh;
-        overflow-y: auto;
-        text-align: justify;
-    }
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 101;
+    width: 90%; /* Ajustado para ser responsivo */
+    max-width: 500px; /* Limitar tamanho máximo */
+    max-height: 80vh; /* Altura máxima relativa à tela */
+    overflow-y: auto; /* Permitir rolagem se necessário */
+    text-align: justify;
+    padding: 20px; /* Espaçamento interno */
+}
 
     .flashcard-popup .question-box {
         margin-bottom: 1rem;
@@ -1024,7 +1016,19 @@ loadNextFlashcard() {
         text-align: left;
         transition: background-color 0.3s;
     }
+    /* Para telas muito pequenas */
+@media (max-width: 600px) {
+    .flashcard-popup {
+        width: 95%; /* Mais largura em telas pequenas */
+        max-width: none; /* Remove o limite máximo */
+        padding: 15px;
+    }
 
+    .flashcard-popup .flashcard-front button, 
+    .flashcard-popup .flashcard-back button {
+        width: 80%; /* Botões ocupando toda a largura no celular */
+    }
+}
     /* Estilo geral do Pop-up */
 .atividades-popup {
     position: fixed;
