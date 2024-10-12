@@ -93,10 +93,13 @@
 <script>
 import axios from 'axios'; // Importa o axios
 import {
-  startCalculateTimeDifference,
+  //startCalculateTimeDifference,
   startUpdateLastExit,
   startUpdateCurrentTime,
   getUserLastExitTimeInterval,
+  updateLastExit,
+  calculateTimeDifference,
+  updateCurrentTime,
 } from './timeUtils.js';
 
 const API_URL = 'http://3.138.85.177:8080/api';
@@ -165,10 +168,32 @@ export default {
   startUpdateLastExit(localStorage.getItem('email'), API_URL);
   startUpdateCurrentTime();
   getUserLastExitTimeInterval(localStorage.getItem('email'), API_URL); // Atualiza a última saída antes de atualizar a hora atual
-  startCalculateTimeDifference();
+  setTimeout(() => {
+    calculateTimeDifference();
+    this.loadFlashcardsBasedOnTimeDifference();
+  }, 1000);
   },
 
   methods: {
+    loadFlashcardsBasedOnTimeDifference() {
+  const timeDifference = calculateTimeDifference();
+  const flashcardsToLoad = timeDifference;
+  const currentTime = updateCurrentTime();
+  console.log(`Diferença em minutos: ${timeDifference}`);
+  console.log(`Hora atual: ${currentTime}.`);
+
+  // Verifica se já existem flashcards armazenados no localstorage
+  const storedFlashcards = localStorage.getItem('flash');
+  if (storedFlashcards) {
+    this.flashcards = JSON.parse(storedFlashcards);
+  }
+
+  // Carrega os flashcards adicionais com base no tempo decorrido
+  for (let i = 0; i < flashcardsToLoad; i++) {
+    this.loadNextFlashcard();
+  }
+  updateLastExit(localStorage.getItem('email'), API_URL);
+},
     scrollLeft() {
       document.getElementById('cards').scrollBy({
         left: -150,
@@ -232,11 +257,11 @@ export default {
     }
 
     setTimeout(() => {
-      this.loadNextFlashcard(); // Função para carregar o próximo flashcard
-
       // Defina um novo tempo para o próximo flashcard
       const newNextFlashcardTime = Date.now() + 60000; // Próximo intervalo de 15 minutos
       localStorage.setItem('nextFlashcardTime', newNextFlashcardTime);
+
+      this.loadNextFlashcard(); // Função para carregar o próximo flashcard
 
       // Continue chamando o intervalo após exibir um flashcard
       this.startFlashcardInterval();

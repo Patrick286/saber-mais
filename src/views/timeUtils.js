@@ -6,10 +6,8 @@ export function calculateTimeDifference() {
   const currentTime = updateCurrentTime();
   const reloadFlag = localStorage.getItem('reload_flag');
 
-  console.log(`Hora atual: ${currentTime}.`);
   if (lastExitTime && currentTime) {
     const differenceInMinutes = getMinutesDifference(lastExitTime, currentTime);
-    console.log(`Diferença de tempo: ${differenceInMinutes} minutos.`);
     return differenceInMinutes;
   } else {
     // Verifica se o reload já foi feito
