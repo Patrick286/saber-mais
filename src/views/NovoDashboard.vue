@@ -90,7 +90,6 @@
 <script>
 import axios from 'axios'; // Importa o axios
 import {
-  //startCalculateTimeDifference,
   startUpdateLastExit,
   startUpdateCurrentTime,
   getUserLastExitTimeInterval,
@@ -99,7 +98,7 @@ import {
   updateCurrentTime,
 } from './timeUtils.js';
 
-const API_URL = 'http://localhost:8080/api';
+const API_URL = 'http://3.138.85.177:8080/api';
 const MAX_FLASHCARDS = 90;
 
 export default {
