@@ -93,7 +93,7 @@
 <script>
 import axios from 'axios'; // Importa o axios
 
-const API_URL = 'http://3.138.85.177:8080/api';
+const API_URL = 'http://localhost:8080/api';
 const TIME_INTERVAL = 30000; // 10 segundos
 const MAX_FLASHCARDS = 90;
 
@@ -268,7 +268,6 @@ export default {
   axios.get(`${API_URL}/flashcards`)
     .then(response => {
       this.flashcardsFromAPI = response.data; // Armazena todos os flashcards recebidos da API
-      console.log('Flashcards carregados do banco de dados:', this.flashcardsFromAPI);
       this.limiteFlashcards = this.flashcardsFromAPI.length;
       
       // Se o número de flashcards carregados for maior que o limite, ajusta o array
@@ -301,36 +300,31 @@ export default {
       }
     },
     startFlashcardInterval() {
-  const storedNextFlashcardTime = localStorage.getItem('nextFlashcardTime');
-  const currentTime = Date.now();
-  let timeUntilNextFlashcard = 60000; // 15 minutos de intervalo por padrão
+    const storedNextFlashcardTime = localStorage.getItem('nextFlashcardTime');
+    const currentTime = Date.now();
+    
+    let timeUntilNextFlashcard = 60000; // 15 minutos de intervalo por padrão
 
-  // Se existir um tempo armazenado no localStorage, calcule o tempo restante
-  if (storedNextFlashcardTime) {
-    const storedTime = parseInt(storedNextFlashcardTime, 10);
-    timeUntilNextFlashcard = storedTime - currentTime;
-    if (timeUntilNextFlashcard < 0) {
-      timeUntilNextFlashcard = 0; // Se o tempo já passou, exibir imediatamente o próximo flashcard
+    // Se existir um tempo armazenado no localStorage, calcule o tempo restante
+    if (storedNextFlashcardTime) {
+      const storedTime = parseInt(storedNextFlashcardTime, 10);
+      timeUntilNextFlashcard = storedTime - currentTime;
+      if (timeUntilNextFlashcard < 0) {
+        timeUntilNextFlashcard = 0; // Se o tempo já passou, exibir imediatamente o próximo flashcard
+      }
     }
-  }
 
-  // Verifica se o tempo decorrido é maior que o intervalo de tempo definido
-  const timeDifference = this.calculateTimeDifference();
-  if (timeDifference > timeUntilNextFlashcard / 60000) {
-    this.loadFlashcardsBasedOnTimeDifference();
-  }
+    setTimeout(() => {
+      this.loadNextFlashcard(); // Função para carregar o próximo flashcard
 
-  setTimeout(() => {
-    this.loadNextFlashcard(); // Função para carregar o próximo flashcard
+      // Defina um novo tempo para o próximo flashcard
+      const newNextFlashcardTime = Date.now() + 60000; // Próximo intervalo de 15 minutos
+      localStorage.setItem('nextFlashcardTime', newNextFlashcardTime);
 
-    // Defina um novo tempo para o próximo flashcard
-    const newNextFlashcardTime = Date.now() + 60000; // Próximo intervalo de 15 minutos
-    localStorage.setItem('nextFlashcardTime', newNextFlashcardTime);
-
-    // Continue chamando o intervalo após exibir um flashcard
-    this.startFlashcardInterval();
-  }, timeUntilNextFlashcard);
-},
+      // Continue chamando o intervalo após exibir um flashcard
+      this.startFlashcardInterval();
+    }, timeUntilNextFlashcard);
+  },
 
 loadNextFlashcard() {
     if (this.flashcards.length >= this.limiteFlashcards || this.flashcardsFromAPI.length === 0) {
@@ -415,7 +409,6 @@ loadNextFlashcard() {
         })
       axios.get(`${API_URL}/user/by-email?email=${userEmail}`)
         .then((response) => {
-          console.log('Dados do flashcard:', response.data);
           const { flashcardLembrei, flashcardQuaseNaoLembrei, flashcardNaoLembrei } = response.data;
           
           // Armazene os valores no localStorage
@@ -639,9 +632,6 @@ loadNextFlashcard() {
           valor: this.wrongAnswers.toString(),
         });
       }
-
-        console.log('Dados do simulado atualizados com sucesso!');
-
       } catch (error) {
         console.error('Erro ao atualizar os dados do simulado:', error);
       }
@@ -649,7 +639,6 @@ loadNextFlashcard() {
       // Exibe o resumo do simulado
       this.showSimulado = false;
       this.showSummary = true;
-      console.log('Respostas:', this.userAnswers);
     },
     desistirSimulado() {
       if (confirm('Tem certeza de que deseja desistir do simulado?')) {
@@ -672,7 +661,6 @@ loadNextFlashcard() {
   if (userEmail) {
     axios.get(`${API_URL}/user/by-email?email=${userEmail}`) // Faz a requisição GET para buscar as atividades do usuário
       .then((response) => {
-        console.log('Resposta da API:', response.data);
         const user = response.data;
         if (user) {
           // Atualizando as atividades do usuário no estado do componente
@@ -954,7 +942,7 @@ loadNextFlashcard() {
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        background-color: #fff;
+        background-color: #e0e1dd;
         border-radius: 8px;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         z-index: 101;
@@ -963,6 +951,7 @@ loadNextFlashcard() {
         max-height: 90vh;
         overflow-y: auto;
         text-align: justify;
+        padding: 20px;
     }
 
     .flashcard-popup .question-box {
