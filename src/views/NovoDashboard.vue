@@ -92,9 +92,14 @@
 
 <script>
 import axios from 'axios'; // Importa o axios
+import {
+  startCalculateTimeDifference,
+  startUpdateLastExit,
+  startUpdateCurrentTime,
+  getUserLastExitTimeInterval,
+} from './timeUtils.js';
 
 const API_URL = 'http://3.138.85.177:8080/api';
-const TIME_INTERVAL = 30000; // 10 segundos
 const MAX_FLASHCARDS = 90;
 
 export default {
@@ -134,7 +139,6 @@ export default {
       limiteFlashcards: MAX_FLASHCARDS,
       notRememberedFlashcards: [],
       currentTime: '',
-      lastTimeDifferenceCalculation: null,
     };
   },
   computed: {
@@ -158,100 +162,13 @@ export default {
   this.carregarFlashcards();
   this.loadFlashcardsFromLocalStorage();
   this.loadNotRememberedFlashcards();
-  this.startUpdateLastExit();
-  this.startUpdateCurrentTime();
-  this.getUserLastExitTimeInterval(); // Atualiza a última saída antes de atualizar a hora atual
-  setTimeout(() => {
-    this.calculateTimeDifference();
-    this.loadFlashcardsBasedOnTimeDifference();
-  }, 100); // aguarda 100ms para garantir que a última saída foi atualizada
-},
+  startUpdateLastExit(localStorage.getItem('email'), API_URL);
+  startUpdateCurrentTime();
+  getUserLastExitTimeInterval(localStorage.getItem('email'), API_URL); // Atualiza a última saída antes de atualizar a hora atual
+  startCalculateTimeDifference();
+  },
 
   methods: {
-    loadFlashcardsBasedOnTimeDifference() {
-  const timeDifference = this.calculateTimeDifference();
-  if (this.lastTimeDifferenceCalculation !== null && timeDifference <= this.lastTimeDifferenceCalculation) {
-    return;
-  }
-  this.lastTimeDifferenceCalculation = timeDifference;
-
-  const flashcardsToLoad = Math.min(timeDifference, this.limiteFlashcards - this.flashcards.length);
-
-  // Verifica se já existem flashcards armazenados no localstorage
-  const storedFlashcards = localStorage.getItem('flash');
-  if (storedFlashcards) {
-    this.flashcards = JSON.parse(storedFlashcards);
-  }
-
-  // Carrega os flashcards adicionais com base no tempo decorrido
-  for (let i = 0; i < flashcardsToLoad; i++) {
-    this.loadNextFlashcard();
-  }
-  this.updateLastExit();
-},
-    calculateTimeDifference() {
-      const lastExitTime = localStorage.getItem('ultima_saida_hora');
-      const currentTime = this.updateCurrentTime();
-      if (lastExitTime && currentTime) {
-        const differenceInMinutes = this.getMinutesDifference(lastExitTime, currentTime);
-        console.log(`Diferença de tempo: ${differenceInMinutes} minutos.`);
-        return differenceInMinutes;
-      } else {
-        console.error('Erro ao calcular a diferença de tempo.');
-      }
-    },
-    getMinutesDifference(lastTime, currentTime) {
-      const lastExitDate = new Date(`1970-01-01T${lastTime}:00`);
-      const currentDate = new Date(`1970-01-01T${currentTime}:00`);
-      const diffMs = currentDate - lastExitDate;
-      return Math.floor(diffMs / 60000);
-    },
-    updateLastExit() {
-      const userEmail = localStorage.getItem('email');
-      if (userEmail) {
-        axios.put(`${API_URL}/user/update-last-exit?email=${userEmail}`)
-          .then(() => console.log('Última saída atualizada'))
-          .catch(error => console.error('Erro ao atualizar última saída:', error));
-      }
-    },
-
-    updateCurrentTime() {
-      const now = new Date();
-      now.setHours(now.getHours() + 3);
-      const horas = now.getHours().toString().padStart(2, '0');
-      const minutos = now.getMinutes().toString().padStart(2, '0');
-      const horaMinuto = `${horas}:${minutos}`;
-      console.log(`Hora atual: ${horaMinuto}`);
-      return horaMinuto;
-    },
-
-    startUpdateLastExit() {
-      this.getUserLastExitTime();
-      setInterval(this.updateLastExit, TIME_INTERVAL);
-    },
-
-    startUpdateCurrentTime() {
-      setInterval(this.updateCurrentTime, TIME_INTERVAL);
-    },
-
-    getUserLastExitTime() {
-      const userEmail = localStorage.getItem('email');
-      if (userEmail) {
-        axios.get(`${API_URL}/user/by-email?email=${userEmail}`)
-          .then(response => {
-            const ultimaSaida = new Date(response.data.ultimaSaida);
-            const horas = ultimaSaida.getHours().toString().padStart(2, '0');
-            const minutos = ultimaSaida.getMinutes().toString().padStart(2, '0');
-            const horaMinuto = `${horas}:${minutos}`;
-            localStorage.setItem('ultima_saida_hora', horaMinuto);
-            console.log(`Última saída: ${horaMinuto}`);
-          })
-          .catch(error => console.error('Erro ao obter última saída:', error));
-      }
-    },
-    getUserLastExitTimeInterval() {
-      setInterval(this.getUserLastExitTime, TIME_INTERVAL);
-    },
     scrollLeft() {
       document.getElementById('cards').scrollBy({
         left: -150,
@@ -302,7 +219,7 @@ export default {
     startFlashcardInterval() {
     const storedNextFlashcardTime = localStorage.getItem('nextFlashcardTime');
     const currentTime = Date.now();
-    
+
     let timeUntilNextFlashcard = 60000; // 15 minutos de intervalo por padrão
 
     // Se existir um tempo armazenado no localStorage, calcule o tempo restante
