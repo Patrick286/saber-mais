@@ -12,15 +12,12 @@
       <div class="content">
     <p>Flashcards:</p>
     <div class="cards-container">
-      <button class="arrow left" @click="scrollLeft"><i class="fas fa-chevron-left"></i></button>
-
       <div class="cards" id="cards">
         <!-- Gerar os flashcards como activycards -->
         <div class="activycard" v-for="(flashcard, index) in flashcards" :key="index" @click="showFlashcard(index)">
           <div class="card-text">Flashcard {{ index + 1 }}</div> <!-- Mostra o número do flashcard -->
         </div>
       </div>
-      <button class="arrow right" @click="scrollRight"><i class="fas fa-chevron-right"></i></button>
     </div>
   </div>
     </body>
@@ -102,7 +99,7 @@ import {
   updateCurrentTime,
 } from './timeUtils.js';
 
-const API_URL = 'http://3.138.85.177:8080/api';
+const API_URL = 'http://localhost:8080/api';
 const MAX_FLASHCARDS = 90;
 
 export default {
@@ -142,6 +139,9 @@ export default {
       limiteFlashcards: MAX_FLASHCARDS,
       notRememberedFlashcards: [],
       currentTime: '',
+      isDragging: false,
+      startPosition: 0,
+      scrollLeft: 0,
     };
   },
   computed: {
@@ -161,6 +161,18 @@ export default {
   },
 
   mounted() {
+    const slider = document.getElementById('cards');
+    
+    slider.addEventListener('mousedown', this.startDrag);
+    slider.addEventListener('mouseleave', this.stopDrag);
+    slider.addEventListener('mouseup', this.stopDrag);
+    slider.addEventListener('mousemove', this.drag);
+
+    // Para dispositivos móveis
+    slider.addEventListener('touchstart', this.startDrag);
+    slider.addEventListener('touchend', this.stopDrag);
+    slider.addEventListener('touchmove', this.drag);
+
   this.checkSimuladoStatus();
   this.carregarFlashcards();
   this.loadFlashcardsFromLocalStorage();
@@ -194,17 +206,22 @@ export default {
   }
   updateLastExit(localStorage.getItem('email'), API_URL);
 },
-    scrollLeft() {
-      document.getElementById('cards').scrollBy({
-        left: -150,
-        behavior: 'smooth',
-      });
+    startDrag(e) {
+      this.isDragging = true;
+      this.startPosition = e.pageX || e.touches[0].pageX;
+      this.scrollLeft = e.currentTarget.scrollLeft;
+      document.body.classList.add('no-select');
     },
-    scrollRight() {
-      document.getElementById('cards').scrollBy({
-        left: 150,
-        behavior: 'smooth',
-      });
+    stopDrag() {
+      this.isDragging = false;
+      document.body.classList.remove('no-select');
+    },
+    drag(e) {
+      if (!this.isDragging) return;
+      e.preventDefault();
+      const x = e.pageX || e.touches[0].pageX;
+      const walk = (x - this.startPosition) * 1.5; // Aumenta o fator para ajustar a sensibilidade
+      e.currentTarget.scrollLeft = this.scrollLeft - walk;
     },
     carregarFlashcards() {
   axios.get(`${API_URL}/flashcards`)
@@ -245,7 +262,7 @@ export default {
     const storedNextFlashcardTime = localStorage.getItem('nextFlashcardTime');
     const currentTime = Date.now();
 
-    let timeUntilNextFlashcard = 60000; // 15 minutos de intervalo por padrão
+    let timeUntilNextFlashcard = 60000;
 
     // Se existir um tempo armazenado no localStorage, calcule o tempo restante
     if (storedNextFlashcardTime) {
@@ -258,7 +275,7 @@ export default {
 
     setTimeout(() => {
       // Defina um novo tempo para o próximo flashcard
-      const newNextFlashcardTime = Date.now() + 60000; // Próximo intervalo de 15 minutos
+      const newNextFlashcardTime = Date.now() + 60000;
       localStorage.setItem('nextFlashcardTime', newNextFlashcardTime);
 
       this.loadNextFlashcard(); // Função para carregar o próximo flashcard
@@ -293,7 +310,6 @@ loadNextFlashcard() {
 
     saveFlashcardsToLocalStorage() {
       localStorage.setItem('flash', JSON.stringify(this.flashcards));
-      console.log('LocalStorage "flash" atualizado:', JSON.parse(localStorage.getItem('flash')));
     },
 
     loadFlashcardsFromLocalStorage() {
@@ -302,7 +318,6 @@ loadNextFlashcard() {
         this.flashcards = JSON.parse(storedFlashcards);
         
       }
-      console.log('LocalStorage "flash":', JSON.parse(localStorage.getItem('flash')));
     },
     
     getAvailableFlashcards() {
@@ -717,16 +732,25 @@ loadNextFlashcard() {
         display: flex;
         align-items: center;
         padding: 20px;
-        position: relative;
+        overflow: hidden;
     }
 
     .cards {
         display: flex;
         gap: 20px;
-        overflow: hidden;
-        width: 100%;
+        overflow-x: auto;
+        scroll-behavior: smooth;
+        padding-bottom: 10px;
+        -webkit-overflow-scrolling: touch;
     }
-
+    .cards::-webkit-scrollbar {
+        display: none; /* Esconde a barra de rolagem */
+    }
+    .no-select {
+        user-select: none; /* Impede a seleção de texto */
+        -webkit-user-select: none;
+        -ms-user-select: none;
+    }
     .card {
         min-width: 150px;
         height: 200px;
@@ -736,29 +760,6 @@ loadNextFlashcard() {
         align-items: center;
         border-radius: 10px;
     }
-
-    .arrow {
-        position: absolute;
-        bottom: -30px;
-        background-color: #757e4a;
-        color: white;
-        border: none;
-        padding: 10px;
-        cursor: pointer;
-        border-radius: 50%;
-        z-index: 1;
-    }
-
-    .arrow.left {
-        left: 50%;
-        transform: translateX(-250%);
-    }
-
-    .arrow.right {
-        right: 50%;
-        transform: translateX(250%);
-    }
-
     .scontent {
         background-color: #e0e1dd;
         color: #0d1b2a;
@@ -871,6 +872,7 @@ loadNextFlashcard() {
         justify-content: center;
         align-items: center;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        cursor: grab;
     }
 
     .activycard .card-text {

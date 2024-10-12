@@ -1,5 +1,5 @@
 import axios from 'axios'; // Importa o axios
-const TIME_INTERVAL = 30000; // 10 segundos
+const TIME_INTERVAL = 60000; // 10 segundos
 
 export function calculateTimeDifference() {
   const lastExitTime = localStorage.getItem('ultima_saida_hora');
@@ -49,6 +49,7 @@ export function updateCurrentTime() {
   const minutos = now.getMinutes().toString().padStart(2, '0');
   const horaMinuto = `${horas}:${minutos}`;
   const dataCompleta = `${horaMinuto}`;
+  localStorage.setItem('tempo_atual', dataCompleta);
   return dataCompleta;
 }
 
