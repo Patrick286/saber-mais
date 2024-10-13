@@ -3,7 +3,6 @@
       <div class="header">
         <h1>Saber+</h1>
         <div>
-        <button class="simulado-button" @click="startSimuladoUm" :disabled="userActivities.simuladosUmRealizado === 1">1º Simulado</button>
         <button class="simulado-button" @click="startSimuladoDois" :disabled="userActivities.simuladosUmRealizado === 0 || userActivities.simuladosDoisRealizado === 1">2º Simulado</button>
         <button @click="toggleAtividadesPopup">Minha atividade</button>
         <button @click="handleLogout">Sair</button>
@@ -41,6 +40,15 @@
       </div>
     </div>
 
+    <!-- Pop-up de Bem-vindo -->
+<div v-if="!userActivities.simuladosUmRealizado" class="overlay"></div>
+<div v-if="!userActivities.simuladosUmRealizado" class="modala">
+  <h2>Bem-vindo(a) ao Saber+!</h2>
+  <p>Antes de começar, precisamos que você faça o seu primeiro simulado. Ele é composto por questões retiradas das provas do Exame Nacional de Desempenho dos Estudantes (Enade) e serve como uma avaliação inicial do seu nível de conhecimento. Esse é o primeiro passo para ajudá-lo(a) a evoluir de forma mais eficiente.</p>
+  <h1>Pronto(a) para começar?</h1>
+  <button @click="startSimuladoUm" class="btn btn-start">Começar</button>
+</div>
+
     <!-- Sobreposição do Simulado -->
     <div v-if="showSimulado" class="overlay"></div>
 
@@ -55,6 +63,9 @@
       </button>
     </div>
     <button @click="desistirSimulado" class="quit-button">Desistir</button>
+    <div class="timer">
+      <h2>Tempo restante: {{ formatTime(timeLeft) }}</h2>
+    </div>
   </div>
 </div>
 
@@ -69,20 +80,44 @@
 </div>
 
 <!-- Pop-up de Atividades -->
-<div v-if="showAtividades" class="atividades-popup">
+<div v-if="showAtividades" class="atividades-popup no-select">
   <div class="atividades-content">
-    <h2>Minhas Atividades</h2>
-    <p>1º Simulado: {{ userActivities.simuladosUmRealizado ? 'Feito.' : 'Não Fez.' }}</p>
-    <p>Respostas corretas: {{ userActivities.respostasSimuladoUmCorretas + '.' }}</p>
-    <p>Respostas incorretas: {{ userActivities.respostasSimuladoUmIncorretas + '.' }}</p>
-    <p>2º Simulado: {{ userActivities.simuladosDoisRealizado ? 'Feito.' : 'Não fez.' }}</p>
-    <p>Respostas corretas: {{ userActivities.respostasSimuladoDoisCorretas + '.' }}</p>
-    <p>Respostas incorretas: {{ userActivities.respostasSimuladoDoisIncorretas + '.' }}</p>
-    <p>Flashcards:</p>
-    <p>Flashcards - Lembrei: {{ userActivities.flashcardLembrei + '.' }}</p>
-    <p>Flashcards - Não lembrei: {{ userActivities.flashcardNaoLembrei + '.' }}</p>
-    <button @click="toggleAtividadesPopup" class="btn btn-close">Fechar</button>
-  </div>
+        <h2>Minhas Atividades</h2>
+        <p>1º Simulado: {{ userActivities.simuladosUmRealizado ? 'Feito.' : 'Não Fez.' }}</p>
+        <div class="percentage-bar">
+        <div class="correct" 
+             :style="{ width: userActivities.simuladoUmCorrectPercentage + '%' }">
+            {{ userActivities.respostasSimuladoUmCorretas }}
+        </div>
+        <div class="incorrect" 
+             :style="{ width: userActivities.simuladoUmIncorrectPercentage + '%' }">
+            {{ userActivities.respostasSimuladoUmIncorretas }}
+        </div>
+    </div>
+        <p>2º Simulado: {{ userActivities.simuladosDoisRealizado ? 'Feito.' : 'Não fez.' }}</p>
+        <div class="percentage-bar">
+        <div class="correct" 
+             :style="{ width: userActivities.simuladoDoisCorrectPercentage + '%' }">
+            {{ userActivities.respostasSimuladoDoisCorretas }}
+        </div>
+        <div class="incorrect" 
+             :style="{ width: userActivities.simuladoDoisIncorrectPercentage + '%' }">
+            {{ userActivities.respostasSimuladoDoisIncorretas }}
+        </div>
+    </div>
+    <p>Flashcards: {{ userActivities.flashcardLembrei + userActivities.flashcardNaoLembrei + "."}}</p>
+    <div class="percentage-bar">
+      <div class="correct" 
+           :style="{ width: userActivities.flashcardLembreiPercentage + '%' }">
+        {{ userActivities.flashcardLembrei }}
+      </div>
+      <div class="incorrect" 
+           :style="{ width: userActivities.flashcardNaoLembreiPercentage + '%' }">
+        {{ userActivities.flashcardNaoLembrei }}
+      </div>
+    </div>
+        <button @click="toggleAtividadesPopup" class="btn btn-close">Fechar</button>
+    </div>
 </div>
 
 </template>
@@ -98,7 +133,7 @@ import {
   updateCurrentTime,
 } from './timeUtils.js';
 
-const API_URL = 'http://3.138.85.177:8080/api';
+const API_URL = 'http://18.220.93.161:8080/api';
 const MAX_FLASHCARDS = 90;
 
 export default {
@@ -141,6 +176,8 @@ export default {
       isDragging: false,
       startPosition: 0,
       scrollLeft: 0,
+      timer: null,  // Armazena o timer atual
+      timeLeft: 180, // 3 minutos em segundos
     };
   },
   computed: {
@@ -189,9 +226,9 @@ export default {
     loadFlashcardsBasedOnTimeDifference() {
   const timeDifference = calculateTimeDifference();
   const flashcardsToLoad = timeDifference;
-  const currentTime = updateCurrentTime();
+  const tempo = updateCurrentTime();
   console.log(`Diferença em minutos: ${timeDifference}`);
-  console.log(`Hora atual: ${currentTime}.`);
+  console.log(`Tempo atual: ${tempo}`);
 
   // Verifica se já existem flashcards armazenados no localstorage
   const storedFlashcards = localStorage.getItem('flash');
@@ -261,7 +298,7 @@ export default {
     const storedNextFlashcardTime = localStorage.getItem('nextFlashcardTime');
     const currentTime = Date.now();
 
-    let timeUntilNextFlashcard = 60000;
+    let timeUntilNextFlashcard = 900000;
 
     // Se existir um tempo armazenado no localStorage, calcule o tempo restante
     if (storedNextFlashcardTime) {
@@ -274,7 +311,7 @@ export default {
 
     setTimeout(() => {
       // Defina um novo tempo para o próximo flashcard
-      const newNextFlashcardTime = Date.now() + 60000;
+      const newNextFlashcardTime = Date.now() + 900000;
       localStorage.setItem('nextFlashcardTime', newNextFlashcardTime);
 
       this.loadNextFlashcard(); // Função para carregar o próximo flashcard
@@ -508,15 +545,54 @@ loadNextFlashcard() {
       console.error('Erro ao buscar os dados do usuário:', error);
     }
   },
+
+  formatTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+  },
+  
+  startTimer() {
+    this.timeLeft = 180; // Reseta o tempo para 3 minutos (180 segundos)
+    
+    this.timer = setInterval(() => {
+      this.timeLeft--;
+      
+      if (this.timeLeft <= 0) {
+        this.markQuestionAsIncorrect(); // Marca a questão como incorreta e carrega a próxima
+      }
+    }, 1000); // Timer que decrementa a cada segundo (1000 ms)
+  },
+  
+  stopTimer() {
+    clearInterval(this.timer); // Para o timer
+    this.timeLeft = 0; // Reseta o tempo restante
+  },
+
+  markQuestionAsIncorrect() {
+    // Marca a questão como incorreta
+    this.userAnswers.push({
+      question: this.currentQuestion.enunciadoUm,
+      answer: null, // Nenhuma resposta foi dada
+      correct: false, // Incorreta pois o tempo acabou
+    });
+    
+    this.wrongAnswers++;
+    this.currentQuestionIndex++;
+    this.stopTimer(); // Para o timer antes de carregar a próxima
+    this.loadNextQuestion(); // Carrega a próxima questão
+  },
+
     loadNextQuestion() {
       if (this.currentQuestionIndex < this.questionsFromAPI.length) {
         this.currentQuestion = this.questionsFromAPI[this.currentQuestionIndex];
         this.totalQuestions++;
+        this.startTimer();
         this.$nextTick(() => {
-          const simuladoPopup = document.querySelector('.simulado-popup');
-          if (simuladoPopup) {
-            simuladoPopup.scrollTop = 0;
-          }
+        const simuladoPopupContent = document.querySelector('.simulado-popup .scontent');
+        if (simuladoPopupContent) {
+          simuladoPopupContent.scrollTop = 0; // Rola o conteúdo até o topo
+        }
         });
       } else {
         this.endSimulado();
@@ -533,6 +609,7 @@ loadNextFlashcard() {
       } else {
         this.wrongAnswers++;
       }
+      this.stopTimer();
       this.currentQuestionIndex++;
       this.loadNextQuestion();
     },
@@ -594,17 +671,20 @@ loadNextFlashcard() {
 
       // Exibe o resumo do simulado
       this.showSimulado = false;
+      this.stopTimer();
       this.showSummary = true;
     },
     desistirSimulado() {
       if (confirm('Tem certeza de que deseja desistir do simulado?')) {
         this.showSimulado = false;
         this.showSummary = false;
+        this.stopTimer();
       }
     },
     closeSummary() {
       this.showSummary = false;
       location.reload()
+      this.loadNextFlashcard();
     },
     toggleAtividadesPopup() {
       this.showAtividades = !this.showAtividades;
@@ -620,16 +700,48 @@ loadNextFlashcard() {
         const user = response.data;
         if (user) {
           // Atualizando as atividades do usuário no estado do componente
+
+          const { 
+            simuladosUmRealizado, 
+            respostasSimuladoUmCorretas, 
+            respostasSimuladoUmIncorretas, 
+            simuladosDoisRealizado, 
+            respostasSimuladoDoisCorretas, 
+            respostasSimuladoDoisIncorretas, 
+            flashcardLembrei, 
+            flashcardNaoLembrei 
+          } = user;
+
+          const simuladoUmTotal = respostasSimuladoUmCorretas + respostasSimuladoUmIncorretas;
+          const simuladoUmCorrectPercentage = simuladoUmTotal ? (respostasSimuladoUmCorretas / simuladoUmTotal) * 100 : 0;
+          const simuladoUmIncorrectPercentage = simuladoUmTotal ? (respostasSimuladoUmIncorretas / simuladoUmTotal) * 100 : 0;
+
+          // Cálculos para o 2º Simulado
+          const simuladoDoisTotal = respostasSimuladoDoisCorretas + respostasSimuladoDoisIncorretas;
+          const simuladoDoisCorrectPercentage = simuladoDoisTotal ? (respostasSimuladoDoisCorretas / simuladoDoisTotal) * 100 : 0;
+          const simuladoDoisIncorrectPercentage = simuladoDoisTotal ? (respostasSimuladoDoisIncorretas / simuladoDoisTotal) * 100 : 0;
+
+          // Cálculos para os Flashcards
+          const flashcardTotal = flashcardLembrei + flashcardNaoLembrei;
+          const flashcardLembreiPercentage = flashcardTotal ? (flashcardLembrei / flashcardTotal) * 100 : 0;
+          const flashcardNaoLembreiPercentage = flashcardTotal ? (flashcardNaoLembrei / flashcardTotal) * 100 : 0;
+
+          // Atualizando o estado com todas as atividades
           this.userActivities = {
-            simuladosUmRealizado: user.simuladosUmRealizado,
-            respostasSimuladoUmCorretas: user.respostasSimuladoUmCorretas,
-            respostasSimuladoUmIncorretas: user.respostasSimuladoUmIncorretas,
-            simuladosDoisRealizado: user.simuladosDoisRealizado,
-            respostasSimuladoDoisCorretas: user.respostasSimuladoDoisCorretas,
-            respostasSimuladoDoisIncorretas: user.respostasSimuladoDoisIncorretas,
-            flashcardsRealizados: user.flashcardsRealizados,
-            flashcardLembrei: user.flashcardLembrei,
-            flashcardNaoLembrei: user.flashcardNaoLembrei,
+            simuladosUmRealizado,
+            respostasSimuladoUmCorretas,
+            respostasSimuladoUmIncorretas,
+            simuladosDoisRealizado,
+            respostasSimuladoDoisCorretas,
+            respostasSimuladoDoisIncorretas,
+            simuladoUmCorrectPercentage,
+            simuladoUmIncorrectPercentage,
+            simuladoDoisCorrectPercentage,
+            simuladoDoisIncorrectPercentage,
+            flashcardLembrei,
+            flashcardNaoLembrei,
+            flashcardLembreiPercentage,
+            flashcardNaoLembreiPercentage,
           };
         } else {
           console.error('Usuário não encontrado na API');
@@ -777,6 +889,14 @@ loadNextFlashcard() {
         text-align: center;
         color: #0d161b;
     }
+    .scontent h2 {
+        font-size: 10px;
+        margin-bottom: 20px;
+        text-align: left;
+        color: #0d161b;
+        margin: 10px 0;
+    }
+
 
     .scontent p {
         margin-bottom: 20px;
@@ -1077,4 +1197,99 @@ loadNextFlashcard() {
     .flashcard-front button:hover {
         background-color: #219ebc;
     }
+    .modala {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #e0e1dd;
+        z-index: 101;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        width: 400px;
+        max-width: 90%;
+        text-align: center;
+        box-sizing: border-box;
+    }
+
+    .modala h2 {
+        margin: 20px 0;
+        font-size: 24px;
+        text-align: center;
+        color: #000000;
+    }
+
+    .modala h1 {
+        margin: 20px 0;
+        font-size: 20px;
+        text-align: center;
+        color: #000000;
+    }
+
+    .modala p {
+        margin: 20px 0;
+        font-size: 16px;
+        text-align: center;
+    }
+
+    .modala p {
+        text-align: justify;
+        margin: 0 auto;
+        color: #000000;
+    }
+
+    .modala button {
+        background-color: #757e4a;
+        color: #dee3e4;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 5px;
+        display: block;
+        margin: 20px auto 0 auto;
+    }
+    .percentage-bar {
+  display: flex;
+  height: 30px;
+  background-color: #d8dad5;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.correct {
+  background-color: #4caf50;
+  text-align: center;
+  color: #d8dad5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.incorrect {
+  background-color: #f44336;
+  text-align: center;
+  color: #d8dad5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.lembrei {
+  background-color: #4caf50;
+  text-align: center;
+  color: #d8dad5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.naolembrei {
+  background-color: #f44336;
+  text-align: center;
+  color: #d8dad5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 </style>
