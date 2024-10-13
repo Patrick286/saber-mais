@@ -53,7 +53,7 @@ export default {
 
     async checkEmailExists(email) {
       try {
-        const response = await fetch('http://localhost:8080/api/user');
+        const response = await fetch('http://18.220.93.161:8080/api/user');
         const users = await response.json();
 
         // Verifica se o email já existe
@@ -75,7 +75,7 @@ export default {
 
         const formattedDate = this.formatDate(this.birthdate);
 
-        const response = await fetch('http://localhost:8080/api/user', {
+        const response = await fetch('http://18.220.93.161:8080/api/user', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

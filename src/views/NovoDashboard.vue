@@ -137,7 +137,7 @@ import {
   updateCurrentTime,
 } from './timeUtils.js';
 
-const API_URL = 'http://localhost:8080/api';
+const API_URL = 'http://18.220.93.161:8080/api';
 const MAX_FLASHCARDS = 90;
 
 export default {
