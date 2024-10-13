@@ -40,20 +40,25 @@
       </div>
     </div>
 
-    <!-- Pop-up de Bem-vindo -->
-<div v-if="!userActivities.simuladosUmRealizado" class="overlay"></div>
-<div v-if="!userActivities.simuladosUmRealizado" class="modala">
-  <h2>Bem-vindo(a) ao Saber+!</h2>
-  <p>Antes de começar, precisamos que você faça o seu primeiro simulado. Ele é composto por questões retiradas das provas do Exame Nacional de Desempenho dos Estudantes (Enade) e serve como uma avaliação inicial do seu nível de conhecimento. Esse é o primeiro passo para ajudá-lo(a) a evoluir de forma mais eficiente.</p>
-  <h1>Pronto(a) para começar?</h1>
-  <button @click="startSimuladoUm" class="btn btn-start">Começar</button>
-</div>
+<!-- Indicador de Loading -->
+<div v-if="isLoading" class="overlay"></div>
+<div v-if="isLoading" class="loading-spinner">
+  <p>Carregando...</p>
+    </div>
+    <!-- Pop-up de Bem-vindo, exibido apenas quando o loading termina -->
+    <div v-if="!isLoading && !userActivities.simuladosUmRealizado" class="overlay"></div>
+    <div v-if="!isLoading && !userActivities.simuladosUmRealizado" class="modala">
+      <h2>Bem-vindo(a) ao Saber+!</h2>
+      <p>Antes de começar, precisamos que você faça o seu primeiro simulado. Ele é composto por questões retiradas das provas do Exame Nacional de Desempenho dos Estudantes (Enade) e serve como uma avaliação inicial do seu nível de conhecimento. Esse é o primeiro passo para ajudá-lo(a) a evoluir de forma mais eficiente.</p>
+      <h1>Pronto(a) para começar?</h1>
+      <button @click="startSimuladoUm" class="btn btn-start">Começar</button>
+    </div>
 
     <!-- Sobreposição do Simulado -->
     <div v-if="showSimulado" class="overlay"></div>
 
     <!-- Pop-up do Simulado -->
-<div v-if="showSimulado" class="simulado-popup">
+<div v-if="showSimulado" class="simulado-popup no-select">
   <div class="scontent">
     <h1>Simulado</h1>
     <p v-for="(text, index) in getQuestionTexts" :key="index" class="question-textt">{{ text }}</p>
@@ -71,7 +76,7 @@
 
 <!-- Pop-up de Resumo do Simulado -->
 <div v-if="showSummary" class="overlay"></div>
-<div v-if="showSummary" class="modal">
+<div v-if="showSummary" class="modal no-select">
     <h2>Resumo do Simulado</h2>
     <h1>{{ correctAnswers }}/{{ totalQuestions }}</h1>
     <p>Muito bem! Você completou o simulado, agora podemos trabalhar juntos nos assuntos.</p>
@@ -178,6 +183,7 @@ export default {
       scrollLeft: 0,
       timer: null,  // Armazena o timer atual
       timeLeft: 180, // 3 minutos em segundos
+      isLoading: true,
     };
   },
   computed: {
@@ -217,6 +223,7 @@ export default {
   startUpdateCurrentTime();
   getUserLastExitTimeInterval(localStorage.getItem('email'), API_URL); // Atualiza a última saída antes de atualizar a hora atual
   setTimeout(() => {
+    this.isLoading = false;
     calculateTimeDifference();
     this.loadFlashcardsBasedOnTimeDifference();
   }, 1000);
@@ -298,7 +305,7 @@ export default {
     const storedNextFlashcardTime = localStorage.getItem('nextFlashcardTime');
     const currentTime = Date.now();
 
-    let timeUntilNextFlashcard = 60000;
+    let timeUntilNextFlashcard = 900000;
 
     // Se existir um tempo armazenado no localStorage, calcule o tempo restante
     if (storedNextFlashcardTime) {
@@ -311,7 +318,7 @@ export default {
 
     setTimeout(() => {
       // Defina um novo tempo para o próximo flashcard
-      const newNextFlashcardTime = Date.now() + 60000;
+      const newNextFlashcardTime = Date.now() + 900000;
       localStorage.setItem('nextFlashcardTime', newNextFlashcardTime);
 
       this.loadNextFlashcard(); // Função para carregar o próximo flashcard
@@ -1293,4 +1300,23 @@ loadNextFlashcard() {
   justify-content: center;
   align-items: center;
 }
+.loading-spinner {
+        text-align: center;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 101;
+        padding: 20px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        width: 400px;
+        max-width: 90%;
+        box-sizing: border-box;
+}
+.loading-spinner p {
+        margin: 20px 0;
+        font-size: 20px;
+        text-align: center;
+        color: #757e4a;
+    }
 </style>
