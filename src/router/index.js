@@ -3,6 +3,7 @@ import UserLogin from '../views/UserLogin.vue';
 import UserRegister from '../views/UserRegister.vue';
 import saberMais from '../views/saberMais.vue';
 import NovoDashboard from '../views/NovoDashboard.vue';
+import EsqueciSenha from '../views/EsqueciSenha.vue';
 
 function isAuthenticated() {
   // Verifica se o usuário está autenticado
@@ -24,6 +25,11 @@ const routes = [
     path: '/register',
     name: 'UserRegister',
     component: UserRegister,
+  },
+  {
+    path: '/esquecisenha',
+    name: 'EsqueciSenha',
+    component: EsqueciSenha,
   },
   {
     path: '/',

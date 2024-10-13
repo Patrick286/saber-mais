@@ -131,14 +131,13 @@
 import axios from 'axios'; // Importa o axios
 import {
   startUpdateLastExit,
-  startUpdateCurrentTime,
   getUserLastExitTimeInterval,
   updateLastExit,
   calculateTimeDifference,
   updateCurrentTime,
 } from './timeUtils.js';
 
-const API_URL = 'http://18.220.93.161:8080/api';
+const API_URL = 'http://localhost:8080/api';
 const MAX_FLASHCARDS = 90;
 
 export default {
@@ -220,7 +219,6 @@ export default {
   this.loadFlashcardsFromLocalStorage();
   this.loadNotRememberedFlashcards();
   startUpdateLastExit(localStorage.getItem('email'), API_URL);
-  startUpdateCurrentTime();
   getUserLastExitTimeInterval(localStorage.getItem('email'), API_URL); // Atualiza a última saída antes de atualizar a hora atual
   setTimeout(() => {
     this.isLoading = false;

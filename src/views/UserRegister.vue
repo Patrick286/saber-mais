@@ -18,11 +18,17 @@
       </form>
       <button @click="goBack" class="back">Voltar</button>
     </div>
+    <!-- Pop-up para mensagem de erro -->
+    <div v-if="showErrorPopup" class="overlay"></div>
+    <div v-if="showErrorPopup" class="modal">
+      <h2>E-mail em uso.</h2>
+      <p>Este e-mail já está em uso. Por favor, use outro e-mail.</p>
+      <button @click="closeErrorPopup">Fechar</button>
+    </div>
 </body>
 </template>
 
 <script>
-//<button @click="goBack" class="back-button">Voltar</button>
 export default {
   name: 'RegisterPage',
   data() {
@@ -33,18 +39,43 @@ export default {
       college: '',
       course: '',
       password: '',
+      showErrorPopup: false,
     };
   },
   methods: {
+    closeErrorPopup() {
+      this.showErrorPopup = false; // Fecha o popup de erro
+    },
     formatDate(date) {
       const [year, month, day] = date.split('-');
       return `${day}/${month}/${year}`; // Formata a data para dd/MM/yyyy
     },
+
+    async checkEmailExists(email) {
+      try {
+        const response = await fetch('http://localhost:8080/api/user');
+        const users = await response.json();
+
+        // Verifica se o email já existe
+        return users.some(user => user.email === email);
+      } catch (error) {
+        console.error("Erro ao verificar email:", error);
+        return false;
+      }
+    },
     async handleRegister() {
       try {
+        // Verifica se o email já está em uso
+        const emailExists = await this.checkEmailExists(this.email);
+
+        if (emailExists) {
+          this.showErrorPopup = true;
+          return; // Impede o envio do formulário
+        }
+
         const formattedDate = this.formatDate(this.birthdate);
 
-        const response = await fetch('http://18.220.93.161:8080/api/user', {
+        const response = await fetch('http://localhost:8080/api/user', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -205,5 +236,57 @@ body {
   text-align: center;
   font-weight: bold;
 }
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #e0e0e0;
+  color: #000000;
+  padding: 20px;
+  border-radius: 10px;
+  z-index: 101;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  width: 300px;
+  box-sizing: border-box;
+  text-align: center; /* Adicionado */
+}
 
+.modal h2 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.modal p {
+  margin: 20px 0;
+  font-size: 16px;
+}
+
+.modal .password {
+  font-size: 24px;
+  margin: 20px 0;
+}
+
+.modal button {
+  background-color: #757e4a;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 5px;
+  margin-top: 10px;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+}
 </style>

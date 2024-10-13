@@ -57,10 +57,6 @@ export function startUpdateLastExit(userEmail, API_URL) {
   setInterval(updateLastExit, TIME_INTERVAL, userEmail, API_URL);
 }
 
-export function startUpdateCurrentTime() {
-  setInterval(updateCurrentTime, TIME_INTERVAL);
-}
-
 export function getUserLastExitTime(userEmail, API_URL) {
   if (userEmail) {
     axios.get(`${API_URL}/user/by-email?email=${userEmail}`)

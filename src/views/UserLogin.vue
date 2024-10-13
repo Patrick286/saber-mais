@@ -12,7 +12,7 @@
       <div class="divider"><span>Novo na Saber+?</span></div>
       <button @click="goToRegister" class="create-account">Criar nova conta</button>
       <div class="divider2"></div>
-        <button class="forgot-password">Esqueci minha senha</button>
+        <button @click= "goEsqueciSenha" class="forgot-password">Esqueci minha senha</button>
     </div>
     <div @click="goToSaberMais" class="info-text">O que é o Saber+?</div>
 </body>
@@ -32,7 +32,7 @@ export default {
   methods: {
     async handleLogin() {
       try {
-        const response = await axios.post('http://18.220.93.161:8080/api/login', {
+        const response = await axios.post('http://localhost:8080/api/login', {
           email: this.email,
           senha: this.senha,
         });
@@ -57,6 +57,9 @@ export default {
     goToSaberMais() {
       this.$router.push('/sabermais');
     },
+    goEsqueciSenha() {
+        this.$router.push('/esquecisenha'); // Redireciona para a página de registro
+      }
   },
 };
 </script>
