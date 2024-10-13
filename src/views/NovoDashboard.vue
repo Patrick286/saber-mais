@@ -980,6 +980,7 @@ loadNextFlashcard() {
     .question-textt {
         font-size: 1.2rem;
         margin-bottom: 1rem;
+        text-align: justify;
     }
 
     .activycard {
