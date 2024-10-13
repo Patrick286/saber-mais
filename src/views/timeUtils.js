@@ -29,7 +29,7 @@ export function getMinutesDifference(lastTime, currentTime) {
     const lastExitDate = new Date(`1970-01-01T${lastTime}:00`);
     const currentDate = new Date(`1970-01-01T${currentTime}:00`);
     const diffMs = currentDate - lastExitDate;
-    return Math.floor(diffMs / 900000);
+    return Math.floor(diffMs / 60000);
 }
 
 export function updateLastExit(userEmail, API_URL) {
