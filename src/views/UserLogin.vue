@@ -15,6 +15,13 @@
         <button @click= "goEsqueciSenha" class="forgot-password">Esqueci minha senha</button>
     </div>
     <div @click="goToSaberMais" class="info-text">O que é o Saber+?</div>
+
+
+    <div v-if="showCancelPopup" class="overlay"></div>
+<div v-if="showCancelPopup" class="modalin no-select">
+        <h2>Credenciais inválidas.</h2>
+        <button @click="closeCancel">Fechar</button>
+    </div>
 </body>
 </template>
 
@@ -27,9 +34,13 @@ export default {
     return {
       email: '',
       senha: '',
+      showCancelPopup: false,
     };
   },
   methods: {
+    closeCancel(){
+      this.showCancelPopup = false;
+    },
     async handleLogin() {
       try {
         const response = await axios.post('http://18.220.93.161:8080/api/login', {
@@ -44,7 +55,7 @@ export default {
           console.log('Email armazenado no localStorage:', localStorage.getItem('email'));
           this.$router.push('/dashboard'); // Redireciona para o dashboard
         } else {
-          alert('Credenciais inválidas');
+          this.showCancelPopup = true;
         }
       } catch (error) {
         console.error('Erro ao tentar login:', error);
@@ -182,4 +193,56 @@ body, h1, label, input, button, .divider span, .info-text {
   margin-bottom: 10vh;
   align-items: center;
 }
+.modalin {
+        background-color: #e0e1dd;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 300px;
+    text-align: center;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 101;
+    max-width: 90%;
+    box-sizing: border-box;
+        }
+        .modalin h2 {
+            margin: 0;
+            font-size: 24px;
+            color: #000000;
+        }
+        .modalin h1 {
+            margin: 20px 0;
+            font-size: 36px;
+        }
+        .modalin p {
+            margin: 20px 0;
+            font-size: 16px;
+        }
+        .modalin button {
+            background-color: #757e4a;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 10px;
+            margin-right: 10px; /* Espaçamento horizontal entre os botões */
+}
+
+/* Para o último botão, você pode remover o espaçamento à direita */
+.modalin button:last-child {
+    margin-right: 0;
+}
+.overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 100;
+    }
 </style>
