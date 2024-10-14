@@ -67,12 +67,19 @@
         {{ option }}
       </button>
     </div>
-    <button @click="desistirSimulado" class="quit-button">Desistir</button>
+    <button @click="openCancel" class="quit-button">Desistir</button>
     <div class="timer">
       <h2>Tempo restante: {{ formatTime(timeLeft) }}</h2>
     </div>
   </div>
 </div>
+
+<div v-if="showCancelPopup" class="overlay2"></div>
+<div v-if="showCancelPopup" class="modalin no-select">
+        <h2>Tem certeza de que deseja desistir do simulado?</h2>
+        <button @click="desistirSimulado">Sim</button>
+        <button @click="closeCancel">Não</button>
+    </div>
 
 <!-- Pop-up de Resumo do Simulado -->
 <div v-if="showSummary" class="overlay"></div>
@@ -183,6 +190,7 @@ export default {
       timer: null,  // Armazena o timer atual
       timeLeft: 180, // 3 minutos em segundos
       isLoading: true,
+      showCancelPopup: false,
     };
   },
   computed: {
@@ -679,12 +687,17 @@ loadNextFlashcard() {
       this.stopTimer();
       this.showSummary = true;
     },
+    openCancel(){
+      this.showCancelPopup = true;
+    },
+    closeCancel(){
+      this.showCancelPopup = false;
+    },
     desistirSimulado() {
-      if (confirm('Tem certeza de que deseja desistir do simulado?')) {
+        this.showCancelPopup = false;
         this.showSimulado = false;
         this.showSummary = false;
         this.stopTimer();
-      }
     },
     closeSummary() {
       this.showSummary = false;
@@ -961,6 +974,15 @@ loadNextFlashcard() {
         bottom: 0;
         background-color: rgba(0, 0, 0, 0.5);
         z-index: 100;
+    }
+    .overlay2 {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 101;
     }
 
     .simulado-popup {
@@ -1317,4 +1339,47 @@ loadNextFlashcard() {
         text-align: center;
         color: #757e4a;
     }
+      .modalin {
+        background-color: #e0e1dd;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 300px;
+    text-align: center;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 101;
+    max-width: 90%;
+    box-sizing: border-box;
+        }
+        .modalin h2 {
+            margin: 0;
+            font-size: 24px;
+            color: #000000;
+        }
+        .modalin h1 {
+            margin: 20px 0;
+            font-size: 36px;
+        }
+        .modalin p {
+            margin: 20px 0;
+            font-size: 16px;
+        }
+        .modalin button {
+            background-color: #757e4a;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 10px;
+            margin-right: 10px; /* Espaçamento horizontal entre os botões */
+}
+
+/* Para o último botão, você pode remover o espaçamento à direita */
+.modalin button:last-child {
+    margin-right: 0;
+}
 </style>
