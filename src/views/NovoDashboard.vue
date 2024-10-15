@@ -1,6 +1,6 @@
 <template>
     <body>
-      <div class="header">
+      <div class="header no-select">
         <h1>Saber+</h1>
         <div>
         <button class="simulado-button" @click="startSimuladoDois" :disabled="userActivities.simuladosUmRealizado === 0 || userActivities.simuladosDoisRealizado === 1">2º Simulado</button>
@@ -8,9 +8,9 @@
         <button @click="handleLogout">Sair</button>
         </div>
       </div>
-      <div class="content">
+      <div class="content no-select">
     <p>Flashcards:</p>
-    <div class="cards-container">
+    <div class="cards-container no-select">
       <div class="cards" id="cards">
         <!-- Gerar os flashcards como activycards -->
         <div class="activycard" v-for="(flashcard, index) in flashcards" :key="index" @click="showFlashcard(index)">
@@ -25,6 +25,7 @@
 
     <!-- Pop-up do Flashcard -->
     <div v-if="currentFlashcard !== null" class="flashcard-popup">
+      <h3>Flashcard {{ currentFlashcardIndex + 1 }} de {{ flashcards.length }}</h3>
       <div v-if="!showBack">
         <div class="flashcard-front">
           <p>{{ currentFlashcard.enunciado }}</p>
@@ -41,8 +42,8 @@
     </div>
 
 <!-- Indicador de Loading -->
-<div v-if="isLoading" class="overlay"></div>
-<div v-if="isLoading" class="loading-spinner">
+<div v-if="isLoading" class="overlay no-select"></div>
+<div v-if="isLoading" class="loading-spinner no-select">
   <p>Carregando...</p>
     </div>
     <!-- Pop-up de Bem-vindo, exibido apenas quando o loading termina -->
@@ -81,6 +82,15 @@
         <button @click="closeCancel">Não</button>
     </div>
 
+    <div v-if="primeiroflash" class="overlay"></div>
+    <div v-if="primeiroflash" class="modal4 no-select">
+      <h2>Parabéns pelo primeiro simulado!</h2>
+      <p>Agora que você completou o primeiro simulado, é hora de praticar os assuntos com os flashcards.</p>
+      <p>Os flashcards são cartões de estudo que ajudam você a revisar e memorizar conteúdos de forma interativa e eficiente.</p>
+      <p>Cada cartão apresenta uma pergunta, e você deve tentar se lembrar da resposta antes de revelá-la. Você receberá um novo flashcard a cada 15 minutos para continuar praticando. Boa prática!</p>
+      <button @click="closePrimeiroFlash">Fechar</button>
+    </div>
+
 <!-- Pop-up de Resumo do Simulado -->
 <div v-if="showSummary" class="overlay"></div>
 <div v-if="showSummary" class="modal no-select">
@@ -92,6 +102,7 @@
 </div>
 
 <!-- Pop-up de Atividades -->
+<div v-if="showAtividades" class="overlay no-select"></div>
 <div v-if="showAtividades" class="atividades-popup no-select">
   <div class="atividades-content">
         <h2>Minhas Atividades</h2>
@@ -144,7 +155,7 @@ import {
   updateCurrentTime,
 } from './timeUtils.js';
 
-const API_URL = 'http://18.220.93.161:8080/api';
+const API_URL = 'http://localhost:8080/api';
 const MAX_FLASHCARDS = 90;
 
 export default {
@@ -191,6 +202,7 @@ export default {
       timeLeft: 180, // 3 minutos em segundos
       isLoading: true,
       showCancelPopup: false,
+      primeiroflash: false,
     };
   },
   computed: {
@@ -495,8 +507,17 @@ loadNextFlashcard() {
     });
   }
 },
-    handleLogout() {
-      localStorage.removeItem('user'); // Limpa a sessão do usuário
+handleLogout() {
+  // Armazena o valor atual de "flash" antes de limpar o localStorage
+  const flashData = localStorage.getItem('flash');
+  
+  // Limpa o localStorage
+  localStorage.clear();
+  
+  // Restaura o valor de "flash" após o clear
+  if (flashData) {
+    localStorage.setItem('flash', flashData);
+  }
       this.$router.push('/login');
       location.reload()
     },
@@ -693,6 +714,9 @@ loadNextFlashcard() {
     closeCancel(){
       this.showCancelPopup = false;
     },
+    closePrimeiroFlash(){
+      this.primeiroflash = false;
+    },
     desistirSimulado() {
         this.showCancelPopup = false;
         this.showSimulado = false;
@@ -701,8 +725,11 @@ loadNextFlashcard() {
     },
     closeSummary() {
       this.showSummary = false;
-      location.reload()
       this.loadNextFlashcard();
+      
+      setTimeout(() => {
+        this.primeiroflash = true;
+      }, 2000); // 2000 milissegundos = 2 segundos
     },
     toggleAtividadesPopup() {
       this.showAtividades = !this.showAtividades;
@@ -1045,6 +1072,10 @@ loadNextFlashcard() {
         padding: 20px;
     }
 
+    .flashcard-popup h3 {
+    text-align: center; /* Centraliza apenas o cabeçalho */
+    }
+
     .flashcard-popup .question-box {
         margin-bottom: 1rem;
     }
@@ -1329,7 +1360,6 @@ loadNextFlashcard() {
         z-index: 101;
         padding: 20px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        width: 400px;
         max-width: 90%;
         box-sizing: border-box;
 }
@@ -1366,6 +1396,7 @@ loadNextFlashcard() {
         .modalin p {
             margin: 20px 0;
             font-size: 16px;
+            text-align: center;
         }
         .modalin button {
             background-color: #757e4a;
@@ -1382,4 +1413,53 @@ loadNextFlashcard() {
 .modalin button:last-child {
     margin-right: 0;
 }
+.modal4 {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #e0e1dd;
+        z-index: 101;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        width: 400px;
+        max-width: 90%;
+        text-align: center;
+        box-sizing: border-box;
+    }
+
+    .modal4 h2 {
+        margin: 0;
+        font-size: 24px;
+    }
+
+    .modal4 h1 {
+        margin: 20px 0;
+        font-size: 48px;
+    }
+
+    .modal4 p {
+        margin: 30px 0;
+        font-size: 20px;
+    }
+
+    .modal4 h2,
+    .modal4 h1,
+    .modal4 p {
+        text-align: center;
+        margin: 0 auto;
+        color: #000000;
+    }
+
+    .modal4 button {
+        background-color: #757e4a;
+        color: #dee3e4;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 5px;
+        display: block;
+        margin: 20px auto 0 auto;
+    }
 </style>

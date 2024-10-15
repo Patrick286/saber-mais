@@ -1,7 +1,7 @@
 <template>
   <body>
-    <h1 class="logo">Saber+</h1>
-    <div class="container">
+    <h1 class="logo no-select">Saber+</h1>
+    <div class="container no-select">
       <form @submit.prevent="handleRegister">
         <div class="register-title">Registrar</div>
         <label for="nome-completo">Nome completo</label>
@@ -20,9 +20,22 @@
     </div>
     <!-- Pop-up para mensagem de erro -->
     <div v-if="showErrorPopup" class="overlay"></div>
-    <div v-if="showErrorPopup" class="modal">
+    <div v-if="showErrorPopup" class="modal no-select">
       <h2>E-mail em uso.</h2>
       <p>Este e-mail já está em uso. Por favor, use outro e-mail.</p>
+      <button @click="closeErrorPopup">Fechar</button>
+    </div>
+      <!-- Pop-up para mensagem de erro -->
+    <div v-if="registercomplete" class="overlay"></div>
+    <div v-if="registercomplete" class="modal no-select">
+      <h2>Cadastro realizado com sucesso!</h2>
+      <p>Seu cadastro foi concluído. Você será redirecionado para a página de login.</p>
+      <button @click="closeErrorPopup2">Fechar</button>
+    </div>
+    <div v-if="erroregister" class="overlay"></div>
+    <div v-if="erroregister" class="modal no-select">
+      <h2>Erro.</h2>
+      <p>Erro ao tentar registrar.</p>
       <button @click="closeErrorPopup">Fechar</button>
     </div>
 </body>
@@ -40,11 +53,17 @@ export default {
       course: '',
       password: '',
       showErrorPopup: false,
+      registercomplete: false,
+      erroregister: false,
     };
   },
   methods: {
     closeErrorPopup() {
-      this.showErrorPopup = false; // Fecha o popup de erro
+      this.showErrorPopup = false;
+    },
+    closeErrorPopup2() {
+      this.registercomplete = false;
+      this.$router.push('/login');
     },
     formatDate(date) {
       const [year, month, day] = date.split('-');
@@ -53,7 +72,7 @@ export default {
 
     async checkEmailExists(email) {
       try {
-        const response = await fetch('http://18.220.93.161:8080/api/user');
+        const response = await fetch('http://localhost:8080/api/user');
         const users = await response.json();
 
         // Verifica se o email já existe
@@ -75,7 +94,7 @@ export default {
 
         const formattedDate = this.formatDate(this.birthdate);
 
-        const response = await fetch('http://18.220.93.161:8080/api/user', {
+        const response = await fetch('http://localhost:8080/api/user', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -103,11 +122,9 @@ export default {
           throw new Error('Erro ao registrar usuário');
         }
 
-        alert('Registro realizado com sucesso!');
-        this.$router.push('/login');
+        this.registercomplete = true;
       } catch (error) {
-        console.error(error);
-        alert('Erro ao tentar registrar');
+        this.erroregister = true;
       }
     },
     goBack() {

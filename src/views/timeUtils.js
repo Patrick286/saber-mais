@@ -25,10 +25,15 @@ export function startCalculateTimeDifference() {
     setInterval(calculateTimeDifference, TIME_INTERVAL);
   }
 
-export function getMinutesDifference(lastTime, currentTime) {
-    const lastExitDate = new Date(`1970-01-01T${lastTime}:00`);
-    const currentDate = new Date(`1970-01-01T${currentTime}:00`);
+  export function getMinutesDifference(lastTime, currentTime) {
+    // `lastTime` e `currentTime` já devem estar no formato completo: "YYYY-MM-DDTHH:mm"
+    const lastExitDate = new Date(lastTime);
+    const currentDate = new Date(currentTime);
+    
+    // Diferença em milissegundos
     const diffMs = currentDate - lastExitDate;
+    
+    // Converter a diferença de milissegundos para minutos
     return Math.floor(diffMs / 60000);
 }
 
@@ -42,12 +47,16 @@ export function updateLastExit(userEmail, API_URL) {
 
 export function updateCurrentTime() {
   const now = new Date();
-
-  // Formatar horas e minutos
+  
+  // Formatar data, horas e minutos
+  const dia = now.getDate().toString().padStart(2, '0');
+  const mes = (now.getMonth() + 1).toString().padStart(2, '0'); // Mês começa do 0
+  const ano = now.getFullYear();
   const horas = now.getHours().toString().padStart(2, '0');
   const minutos = now.getMinutes().toString().padStart(2, '0');
-  const horaMinuto = `${horas}:${minutos}`;
-  const dataCompleta = `${horaMinuto}`;
+  
+  // Criar string da data completa
+  const dataCompleta = `${ano}-${mes}-${dia}T${horas}:${minutos}`;
   localStorage.setItem('tempo_atual', dataCompleta);
   return dataCompleta;
 }
@@ -65,10 +74,16 @@ export function getUserLastExitTime(userEmail, API_URL) {
         const parsedDate = parseDate(ultimaSaida);
         if (parsedDate) {
           const ultimaSaidaDate = new Date(parsedDate);
+          
+          // Formatar a data completa
+          const dia = ultimaSaidaDate.getDate().toString().padStart(2, '0');
+          const mes = (ultimaSaidaDate.getMonth() + 1).toString().padStart(2, '0');
+          const ano = ultimaSaidaDate.getFullYear();
           const horas = ultimaSaidaDate.getHours().toString().padStart(2, '0');
           const minutos = ultimaSaidaDate.getMinutes().toString().padStart(2, '0');
-          const horaMinuto = `${horas}:${minutos}`;
-          const dataCompleta = `${horaMinuto}`;
+          
+          // Criar string no formato "YYYY-MM-DDTHH:mm"
+          const dataCompleta = `${ano}-${mes}-${dia}T${horas}:${minutos}`;
           localStorage.setItem('ultima_saida_hora', dataCompleta);
           console.log(`Última saída: ${dataCompleta}`);
         } else {

@@ -1,7 +1,7 @@
 <template>
   <body>
-    <h1 class="logo">Saber+</h1>
-    <div class="container">
+    <h1 class="logo no-select">Saber+</h1>
+    <div class="container no-select">
       <form @submit.prevent="handleLogin">
         <label for="email">E-mail</label>
         <input type="email" id="email" v-model="email">
@@ -14,13 +14,19 @@
       <div class="divider2"></div>
         <button @click= "goEsqueciSenha" class="forgot-password">Esqueci minha senha</button>
     </div>
-    <div @click="goToSaberMais" class="info-text">O que é o Saber+?</div>
+    <div @click="goToSaberMais" class="info-text no-select">O que é o Saber+?</div>
 
 
     <div v-if="showCancelPopup" class="overlay"></div>
 <div v-if="showCancelPopup" class="modalin no-select">
         <h2>Credenciais inválidas.</h2>
         <button @click="closeCancel">Fechar</button>
+    </div>
+    <div v-if="erroregister" class="overlay"></div>
+    <div v-if="erroregister" class="modalin no-select">
+      <h2>Erro.</h2>
+      <p>Erro ao tentar efetuar o login.</p>
+      <button @click="closeCancel">Fechar</button>
     </div>
 </body>
 </template>
@@ -35,7 +41,16 @@ export default {
       email: '',
       senha: '',
       showCancelPopup: false,
+      erroregister: false,
     };
+  },
+  mounted() {
+    // Verifica se já existe um email armazenado no localStorage
+    const storedEmail = localStorage.getItem('email');
+    if (storedEmail) {
+      // Se existir, redireciona diretamente para o dashboard
+      this.$router.push('/dashboard');
+    }
   },
   methods: {
     closeCancel(){
@@ -43,7 +58,7 @@ export default {
     },
     async handleLogin() {
       try {
-        const response = await axios.post('http://18.220.93.161:8080/api/login', {
+        const response = await axios.post('http://localhost:8080/api/login', {
           email: this.email,
           senha: this.senha,
         });
@@ -52,14 +67,12 @@ export default {
           const user = response.data.user; // Assumindo que a API retorna o usuário e um campo de sucesso
           localStorage.setItem('user', JSON.stringify(user)); // Armazena o usuário no localStorage
           localStorage.setItem('email', this.email); // Armazena o email no localStorage
-          console.log('Email armazenado no localStorage:', localStorage.getItem('email'));
           this.$router.push('/dashboard'); // Redireciona para o dashboard
         } else {
           this.showCancelPopup = true;
         }
       } catch (error) {
-        console.error('Erro ao tentar login:', error);
-        alert('Erro ao conectar ao servidor');
+        this.erroregister = true;
       }
     },
     goToRegister() {
@@ -244,5 +257,10 @@ body, h1, label, input, button, .divider span, .info-text {
         bottom: 0;
         background-color: rgba(0, 0, 0, 0.5);
         z-index: 100;
+    }
+    .no-select {
+        user-select: none; /* Impede a seleção de texto */
+        -webkit-user-select: none;
+        -ms-user-select: none;
     }
 </style>

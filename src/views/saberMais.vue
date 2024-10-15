@@ -1,57 +1,57 @@
 <template>
     <body>
-        <button @click="goToLogin" class="back-button">Voltar</button>
-  <h1>
+        <button @click="goToLogin" class="back-button no-select">Voltar</button>
+  <h1 class="no-select">
    O que é o
    <i>
     Saber+
    </i>
    ?
   </h1>
-  <p class="special-highlight">
+  <p class="special-highlight no-select">
    O Saber+ é um projeto cujo objetivo é ajudar estudantes a se prepararem para o ENADE através de simulados e flashcards que reforçam os conteúdos.
   </p>
-  <p style="color: #8b9fb3;">
+  <p class="highlight no-select">
    Mas o que são os "flashcards"?
   </p>
-  <p class="special-highlight">
+  <p class="special-highlight no-select">
    Os flashcards são um método de memorização espaçada, ou seja, cartinhas como as de um jogo que contêm perguntas relacionadas ao assunto de um lado e a resposta atrás.
   </p>
-  <p class="highlight">
+  <p class="highlight no-select">
    E como o site funciona?
   </p>
-  <p class="special-highlight">
+  <p class="special-highlight no-select">
     O primeiro passo obrigatório para o usuário é realizar o primeiro simulado. Esse simulado consiste em um conjunto de questões retiradas das provas do Exame Nacional de Desempenho dos Estudantes (Enade). Ele serve como uma avaliação inicial do nível de conhecimento do usuário.
   </p>
-  <p class="special-highlight">
+  <p class="special-highlight no-select">
     Após a conclusão do primeiro simulado, os flashcards serão liberados. Esses flashcards são ferramentas de revisão que, em intervalos de tempo regulares, apresentarão questões relacionadas ao conteúdo do simulado realizado. A seleção dos flashcards é feita de forma aleatória, abrangendo questões específicas já respondidas no simulado.
   </p>
-  <p class="special-highlight">
+  <p class="special-highlight no-select">
     O segundo simulado só será liberado após um determinado período. Esse intervalo será para que o usuário tenha tempo para revisar e consolidar o conteúdo através dos flashcards.
   </p>
-  <p class="special-highlight">
+  <p class="special-highlight no-select">
     Após o usuário realizar o segundo simulado, será feita a comparação do desempenho do usuário antes e depois do período de estudo focado nas questões do Enade. Essa análise fornecerá uma visão clara sobre o impacto do uso dos flashcards no processo de aprendizagem, sendo possível avaliar a eficácia da aplicação na retenção de conteúdo e na melhora do desempenho.
   </p>
-  <h2>
+  <h2 class="no-select">
    Quem somos nós?
   </h2>
-  <div class="profile-container">
-   <div class="profile">
+  <div class="profile-container no-select">
+   <div class="profile no-select">
     <p class="profile-name">Ronald V. Jesus</p>
     <img alt="Foto de Ronald V. Jesus" height="200" src="../components/ronald.png" width="200"/>
     <p>
      Clique para Saber+
     </p>
    </div>
-   <div class="profile">
-    <p class="profile-name">Patrick M. Santos</p>
+   <div class="profile no-select">
+    <p class="profile-name no-select">Patrick M. Santos</p>
     <img alt="Foto de Patrick M. Santos" height="200" src="../components/patrick.png" width="200"/>
     <p>
      Clique para Saber+
     </p>
    </div>
-   <div class="profile">
-    <p class="profile-name">Amanda H. Lara</p>
+   <div class="profile no-select">
+    <p class="profile-name no-select">Amanda H. Lara</p>
     <img alt="Foto de Amanda H. Lara" height="200" src="../components/kk.jpg" width="200"/>
     <p>
      Clique para Saber+

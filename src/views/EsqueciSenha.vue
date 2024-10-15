@@ -77,7 +77,7 @@
     }
 
     // Faz uma requisição GET para pegar todos os usuários
-    const response = await fetch('http://18.220.93.161:8080/api/user', {
+    const response = await fetch('http://localhost:8080/api/user', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
