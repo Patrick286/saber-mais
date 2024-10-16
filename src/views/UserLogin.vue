@@ -26,7 +26,7 @@
     <div v-if="erroregister" class="modalin no-select">
       <h2>Erro.</h2>
       <p>Erro ao tentar efetuar o login.</p>
-      <button @click="closeCancel">Fechar</button>
+      <button @click="closeErro">Fechar</button>
     </div>
 </body>
 </template>
@@ -55,6 +55,9 @@ export default {
   methods: {
     closeCancel(){
       this.showCancelPopup = false;
+    },
+    closeErro(){
+      this.erroregister = false;
     },
     async handleLogin() {
       try {
@@ -212,7 +215,6 @@ body, h1, label, input, button, .divider span, .info-text {
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     width: 300px;
-    text-align: center;
     position: fixed;
     top: 50%;
     left: 50%;
@@ -225,6 +227,7 @@ body, h1, label, input, button, .divider span, .info-text {
             margin: 0;
             font-size: 24px;
             color: #000000;
+            text-align: center;
         }
         .modalin h1 {
             margin: 20px 0;
@@ -233,6 +236,7 @@ body, h1, label, input, button, .divider span, .info-text {
         .modalin p {
             margin: 20px 0;
             font-size: 16px;
+            text-align: center;
         }
         .modalin button {
             background-color: #757e4a;
