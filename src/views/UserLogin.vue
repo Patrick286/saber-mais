@@ -58,7 +58,7 @@ export default {
     },
     async handleLogin() {
       try {
-        const response = await axios.post('http://localhost:8080/api/login', {
+        const response = await axios.post('http://3.19.208.176:8080/api/login', {
           email: this.email,
           senha: this.senha,
         });

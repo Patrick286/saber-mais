@@ -155,7 +155,7 @@ import {
   updateCurrentTime,
 } from './timeUtils.js';
 
-const API_URL = 'http://localhost:8080/api';
+const API_URL = 'http://3.19.208.176:8080/api';
 const MAX_FLASHCARDS = 90;
 
 export default {
@@ -250,7 +250,7 @@ export default {
   methods: {
     loadFlashcardsBasedOnTimeDifference() {
   const timeDifference = calculateTimeDifference();
-  const flashcardsToLoad = timeDifference;
+  const flashcardsToLoad = Math.min(timeDifference, MAX_FLASHCARDS - this.flashcards.length); // Limitar o máximo de flashcards a carregar
   const tempo = updateCurrentTime();
   console.log(`Diferença em minutos: ${timeDifference}`);
   console.log(`Tempo atual: ${tempo}`);
