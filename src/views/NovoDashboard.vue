@@ -18,6 +18,7 @@
         </div>
       </div>
     </div>
+    <p>Próximo flashcard em: {{ timeUntilNextFlashcardDisplay  }} segundos.</p>
   </div>
     </body>
 
@@ -203,6 +204,8 @@ export default {
       isLoading: true,
       showCancelPopup: false,
       primeiroflash: false,
+      timeUntilNextFlashcardDisplay: 60,
+      timerInterval: null,
     };
   },
   computed: {
@@ -332,7 +335,26 @@ export default {
       if (timeUntilNextFlashcard < 0) {
         timeUntilNextFlashcard = 0; // Se o tempo já passou, exibir imediatamente o próximo flashcard
       }
-    }
+    } else {
+        // Se não houver um próximo flashcard definido, crie o primeiro timer
+        const newNextFlashcardTime = currentTime + 60000; // 1 minuto no futuro
+        localStorage.setItem('nextFlashcardTime', newNextFlashcardTime);
+        timeUntilNextFlashcard = 60000; // 60 segundos para o primeiro flashcard
+      }
+
+    this.timeUntilNextFlashcardDisplay = Math.floor(timeUntilNextFlashcard / 1000);
+
+      // Limpa qualquer intervalo anterior
+      if (this.timerInterval) {
+        clearInterval(this.timerInterval);
+      }
+
+      // Inicia um contador que atualiza a cada segundo
+      this.timerInterval = setInterval(() => {
+        if (this.timeUntilNextFlashcardDisplay > 0) {
+          this.timeUntilNextFlashcardDisplay--;  // Decrementa o tempo restante
+        }
+      }, 1000);
 
     setTimeout(() => {
       // Defina um novo tempo para o próximo flashcard
@@ -344,6 +366,13 @@ export default {
       // Continue chamando o intervalo após exibir um flashcard
       this.startFlashcardInterval();
     }, timeUntilNextFlashcard);
+  },
+
+  beforeDestroy() {
+    // Limpa o intervalo quando o componente for destruído
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+    }
   },
 
 loadNextFlashcard() {
