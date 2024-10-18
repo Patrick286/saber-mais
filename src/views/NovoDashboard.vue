@@ -65,7 +65,7 @@
     <h1>Simulado</h1>
     <p v-for="(text, index) in getQuestionTexts" :key="index" class="question-textt">{{ text }}</p>
     <div class="options">
-      <button v-for="(option, index) in currentQuestion.alternativas" :key="index" @click="submitAnswer(option)" class="option-button">
+      <button v-for="(option, index) in currentQuestion.alternativas" :key="index" @click="submitAnswer(option)" class="option-button" @focus="removeButtonFocus">
         {{ option }}
       </button>
     </div>
@@ -153,7 +153,6 @@ import {
   getUserLastExitTimeInterval,
   updateLastExit,
   calculateTimeDifference,
-  updateCurrentTime,
 } from './timeUtils.js';
 
 const API_URL = 'http://3.19.208.176:8080/api';
@@ -251,12 +250,16 @@ export default {
   },
 
   methods: {
+    removeButtonFocus() {
+      // Remove o foco de todos os botões da página
+      const buttons = document.querySelectorAll('.option-button');
+      buttons.forEach(button => {
+        button.blur();
+      });
+    },
     loadFlashcardsBasedOnTimeDifference() {
   const timeDifference = calculateTimeDifference();
   const flashcardsToLoad = Math.min(timeDifference, MAX_FLASHCARDS - this.flashcards.length); // Limitar o máximo de flashcards a carregar
-  const tempo = updateCurrentTime();
-  console.log(`Diferença em minutos: ${timeDifference}`);
-  console.log(`Tempo atual: ${tempo}`);
 
   // Verifica se já existem flashcards armazenados no localstorage
   const storedFlashcards = localStorage.getItem('flash');
@@ -377,7 +380,6 @@ export default {
 
 loadNextFlashcard() {
     if (this.flashcards.length >= this.limiteFlashcards || this.flashcardsFromAPI.length === 0) {
-      console.log('Todos os flashcards foram carregados ou limite atingido');
       return;
     }
 
@@ -385,7 +387,6 @@ loadNextFlashcard() {
       const nextFlashcard = this.notRememberedFlashcards.shift();
       this.flashcards.push(nextFlashcard);
       this.saveNotRememberedFlashcardsToLocalStorage();
-      console.log('Flashcard não lembrado carregado:', nextFlashcard);
       return;
     }
 
@@ -395,7 +396,6 @@ loadNextFlashcard() {
     this.flashcards.push(nextFlashcard);
     this.saveFlashcardsToLocalStorage();
     this.flashcardsFromAPI.splice(randomIndex, 1);
-    console.log('Flashcard carregado:', nextFlashcard);
   },
 
     saveFlashcardsToLocalStorage() {
@@ -675,6 +675,7 @@ handleLogout() {
       this.stopTimer();
       this.currentQuestionIndex++;
       this.loadNextQuestion();
+      this.removeButtonFocus();
     },
     async endSimulado() {
       // Calcula questões corretas e erradas
@@ -745,6 +746,7 @@ handleLogout() {
     },
     closePrimeiroFlash(){
       this.primeiroflash = false;
+      location.reload()
     },
     desistirSimulado() {
         this.showCancelPopup = false;

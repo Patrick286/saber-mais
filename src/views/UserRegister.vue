@@ -14,10 +14,19 @@
         <input type="email" id="email" v-model="email">
         <label for="senha">Senha</label>
         <input type="password" id="senha" v-model="password">
-        <button type="submit" class="btn btn-register">Registrar</button>
+        <button type="submit" class="btn btn-register" :disabled="!isFormValid">Registrar</button>
       </form>
       <button @click="goBack" class="back">Voltar</button>
     </div>
+
+    <!-- Pop-up para erro de idade mínima -->
+    <div v-if="showAgeErrorPopup" class="overlay"></div>
+    <div v-if="showAgeErrorPopup" class="modal no-select">
+      <h2>Idade insuficiente.</h2>
+      <p>Você precisa ter pelo menos 18 anos para se registrar.</p>
+      <button @click="closeAgeErrorPopup">Fechar</button>
+    </div>
+
     <!-- Pop-up para mensagem de erro -->
     <div v-if="showErrorPopup" class="overlay"></div>
     <div v-if="showErrorPopup" class="modal no-select">
@@ -25,20 +34,23 @@
       <p>Este e-mail já está em uso. Por favor, use outro e-mail.</p>
       <button @click="closeErrorPopup">Fechar</button>
     </div>
-      <!-- Pop-up para mensagem de erro -->
+
+    <!-- Pop-up para sucesso de registro -->
     <div v-if="registercomplete" class="overlay"></div>
     <div v-if="registercomplete" class="modal no-select">
       <h2>Cadastro realizado com sucesso!</h2>
       <p>Seu cadastro foi concluído. Você será redirecionado para a página de login.</p>
       <button @click="closeErrorPopup2">Fechar</button>
     </div>
+
+    <!-- Pop-up para erro de registro -->
     <div v-if="erroregister" class="overlay"></div>
     <div v-if="erroregister" class="modal no-select">
       <h2>Erro.</h2>
       <p>Erro ao tentar registrar.</p>
       <button @click="closeErrorPopup">Fechar</button>
     </div>
-</body>
+  </body>
 </template>
 
 <script>
@@ -55,11 +67,29 @@ export default {
       showErrorPopup: false,
       registercomplete: false,
       erroregister: false,
+      showAgeErrorPopup: false,
     };
   },
+  computed: {
+  isFormValid() {
+    return (
+      this.fullName &&
+      this.email &&
+      this.birthdate &&
+      this.course &&
+      this.password
+    );
+  }
+},
   methods: {
+    closeAgeErrorPopup() {
+      this.showAgeErrorPopup = false;
+    },
     closeErrorPopup() {
       this.showErrorPopup = false;
+    },
+    closeError() {
+      this.erroregister = false;
     },
     closeErrorPopup2() {
       this.registercomplete = false;
@@ -68,6 +98,20 @@ export default {
     formatDate(date) {
       const [year, month, day] = date.split('-');
       return `${day}/${month}/${year}`; // Formata a data para dd/MM/yyyy
+    },
+
+    calculateAge(birthdate) {
+      const today = new Date();
+      const birthDate = new Date(birthdate);
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+
+      // Verifica se a pessoa já fez aniversário no ano atual
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+
+      return age;
     },
 
     async checkEmailExists(email) {
@@ -84,6 +128,13 @@ export default {
     },
     async handleRegister() {
       try {
+        // Verifica se o usuário tem 18 anos ou mais
+        const age = this.calculateAge(this.birthdate);
+        if (age < 18) {
+          this.showAgeErrorPopup = true;  // Exibe o pop-up de erro de idade
+          return; // Impede o envio do formulário
+        }
+
         // Verifica se o email já está em uso
         const emailExists = await this.checkEmailExists(this.email);
 
@@ -103,7 +154,6 @@ export default {
             nome: this.fullName,
             email: this.email,
             curso: this.course,
-            faculdade: this.college,
             senha: this.password,
             data: formattedDate,  // Envia a data formatada
             simuladosUmRealizado: 0,

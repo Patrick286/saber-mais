@@ -1,5 +1,5 @@
 import axios from 'axios'; // Importa o axios
-const TIME_INTERVAL = 60000; // 10 segundos
+const TIME_INTERVAL = 10000; // 10 segundos
 
 export function calculateTimeDifference() {
   const lastExitTime = localStorage.getItem('ultima_saida_hora');
@@ -14,8 +14,6 @@ export function calculateTimeDifference() {
     if (!reloadFlag) {
       localStorage.setItem('reload_flag', 'true'); // Seta o flag para indicar que já recarregou
       location.reload(); // Recarrega a página
-    } else {
-      console.log("A página já foi recarregada uma vez. Evitando loop.");
     }
   }
 }
@@ -40,7 +38,6 @@ export function startCalculateTimeDifference() {
 export function updateLastExit(userEmail, API_URL) {
   if (userEmail) {
     axios.put(`${API_URL}/user/update-last-exit?email=${userEmail}`)
-      .then(() => console.log('Última saída atualizada'))
       .catch(error => console.error('Erro ao atualizar última saída:', error));
   }
 }
@@ -85,7 +82,6 @@ export function getUserLastExitTime(userEmail, API_URL) {
           // Criar string no formato "YYYY-MM-DDTHH:mm"
           const dataCompleta = `${ano}-${mes}-${dia}T${horas}:${minutos}`;
           localStorage.setItem('ultima_saida_hora', dataCompleta);
-          console.log(`Última saída: ${dataCompleta}`);
         } else {
           console.error('Invalid date string:', ultimaSaida);
         }

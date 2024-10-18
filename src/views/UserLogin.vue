@@ -236,7 +236,7 @@ body, h1, label, input, button, .divider span, .info-text {
         .modalin p {
             margin: 20px 0;
             font-size: 16px;
-            text-align: center;
+            
         }
         .modalin button {
             background-color: #757e4a;
