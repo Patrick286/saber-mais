@@ -674,8 +674,8 @@ handleLogout() {
       }
       this.stopTimer();
       this.currentQuestionIndex++;
-      this.loadNextQuestion();
       this.removeButtonFocus();
+      this.loadNextQuestion();
     },
     async endSimulado() {
       // Calcula questões corretas e erradas
