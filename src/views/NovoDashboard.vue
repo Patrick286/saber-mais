@@ -995,10 +995,6 @@ handleLogout() {
         text-align: left;
     }
 
-    .scontent .options button:hover {
-        background-color: #219ebc;
-    }
-
     .scontent .quit-button {
         background-color: #996750;
         color: #ffffff;
