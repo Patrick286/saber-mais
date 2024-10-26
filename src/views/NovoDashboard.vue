@@ -203,7 +203,7 @@ export default {
       isLoading: true,
       showCancelPopup: false,
       primeiroflash: false,
-      timeUntilNextFlashcardDisplay: 60,
+      timeUntilNextFlashcardDisplay: 180,
       timerInterval: null,
     };
   },
@@ -329,7 +329,7 @@ export default {
     const storedNextFlashcardTime = localStorage.getItem('nextFlashcardTime');
     const currentTime = Date.now();
 
-    let timeUntilNextFlashcard = 60000;
+    let timeUntilNextFlashcard = 180000;
 
     // Se existir um tempo armazenado no localStorage, calcule o tempo restante
     if (storedNextFlashcardTime) {
@@ -340,9 +340,9 @@ export default {
       }
     } else {
         // Se não houver um próximo flashcard definido, crie o primeiro timer
-        const newNextFlashcardTime = currentTime + 60000; // 1 minuto no futuro
+        const newNextFlashcardTime = currentTime + 180000; // 1 minuto no futuro
         localStorage.setItem('nextFlashcardTime', newNextFlashcardTime);
-        timeUntilNextFlashcard = 60000; // 60 segundos para o primeiro flashcard
+        timeUntilNextFlashcard = 180000; // 60 segundos para o primeiro flashcard
       }
 
     this.timeUntilNextFlashcardDisplay = Math.floor(timeUntilNextFlashcard / 1000);
@@ -361,7 +361,7 @@ export default {
 
     setTimeout(() => {
       // Defina um novo tempo para o próximo flashcard
-      const newNextFlashcardTime = Date.now() + 60000;
+      const newNextFlashcardTime = Date.now() + 180000;
       localStorage.setItem('nextFlashcardTime', newNextFlashcardTime);
 
       this.loadNextFlashcard(); // Função para carregar o próximo flashcard
