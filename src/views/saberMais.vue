@@ -40,21 +40,21 @@
     <p class="profile-name">Ronald V. Jesus</p>
     <img alt="Foto de Ronald V. Jesus" height="200" src="../components/ronald.png" width="200"/>
     <p>
-     Clique para Saber+
+     Clique para Saber+ 😊
     </p>
    </div>
    <div class="profile no-select">
     <p class="profile-name no-select">Patrick M. Santos</p>
     <img alt="Foto de Patrick M. Santos" height="200" src="../components/patrick.png" width="200"/>
     <p>
-     Clique para Saber+
+     Clique para Saber+ 😆
     </p>
    </div>
    <div class="profile no-select">
     <p class="profile-name no-select">Amanda H. Lara</p>
     <img alt="Foto de Amanda H. Lara" height="200" src="../components/kk.jpg" width="200"/>
     <p>
-     Clique para Saber+
+     Clique para Saber+ 😉
     </p>
    </div>
   </div>

@@ -3,7 +3,7 @@
       <div class="header no-select">
         <h1>Saber+</h1>
         <div>
-        <button class="simulado-button" @click="startSimuladoDois" :disabled="userActivities.simuladosUmRealizado === 0 || userActivities.simuladosDoisRealizado === 1">2º Simulado</button>
+          <button class="simulado-button" @click="startSimuladoDois" :disabled="true">2º Simulado</button>
         <button @click="toggleAtividadesPopup">Minha atividade</button>
         <button @click="handleLogout">Sair</button>
         </div>
