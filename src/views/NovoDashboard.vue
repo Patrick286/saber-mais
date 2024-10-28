@@ -3,7 +3,8 @@
       <div class="header no-select">
         <h1>Saber+</h1>
         <div>
-          <button class="simulado-button" @click="startSimuladoDois" :disabled="true">2º Simulado</button>
+        <button class="simulado-button" @click="startSimuladoDois" :disabled="true">2º Simulado</button>
+        <!-- <button class="simulado-button" @click="startSimuladoDois" :disabled="userActivities.simuladosUmRealizado === 0 || userActivities.simuladosDoisRealizado === 1">2º Simulado</button> -->
         <button @click="toggleAtividadesPopup">Minha atividade</button>
         <button @click="handleLogout">Sair</button>
         </div>
@@ -88,7 +89,7 @@
       <h2>Parabéns pelo primeiro simulado!</h2>
       <p>Agora que você completou o primeiro simulado, é hora de praticar os assuntos com os flashcards.</p>
       <p>Os flashcards são cartões de estudo que ajudam você a revisar e memorizar conteúdos de forma interativa e eficiente.</p>
-      <p>Cada cartão apresenta uma pergunta, e você deve tentar se lembrar da resposta antes de revelá-la. Você receberá um novo flashcard a cada 15 minutos para continuar praticando. Boa prática!</p>
+      <p>Cada cartão apresenta uma pergunta, e você deve tentar se lembrar da resposta antes de revelá-la. Você receberá um novo flashcard a cada 3 minutos para continuar praticando. Boa prática!</p>
       <button @click="closePrimeiroFlash">Fechar</button>
     </div>
 
