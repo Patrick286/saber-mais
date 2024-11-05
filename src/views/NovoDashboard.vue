@@ -3,7 +3,7 @@
       <div class="header no-select">
         <h1>Saber+</h1>
         <div>
-        <button class="simulado-button" @click="startSimuladoDois" :disabled="true">2º Simulado</button>
+        <button class="simulado-button" @click="indisponivelPopup" :disabled="false">2º Simulado</button>
         <!-- <button class="simulado-button" @click="startSimuladoDois" :disabled="userActivities.simuladosUmRealizado === 0 || userActivities.simuladosDoisRealizado === 1">2º Simulado</button> -->
         <button @click="toggleAtividadesPopup">Minha atividade</button>
         <button @click="handleLogout">Sair</button>
@@ -22,6 +22,22 @@
     <p>Próximo flashcard em: {{ timeUntilNextFlashcardDisplay  }} segundos.</p>
   </div>
     </body>
+
+    <!-- Pop-up de Agradecimento, exibido apenas após o segundo simulado ser concluído -->
+  <div v-if="userActivities.simuladosUmRealizado && userActivities.simuladosDoisRealizado" class="overlay"></div>
+  <div v-if="userActivities.simuladosUmRealizado && userActivities.simuladosDoisRealizado" class="modal4 no-select">
+  <h2>Obrigado por sua participação!</h2>
+  <p>Agradecemos por ter a nossa aplicação web e por nos ajudar na coleta de dados.</p>
+  <p>A partir de agora, você não precisa mais utilizar a aplicação.</p>
+  <p>Mais uma vez, obrigado por seu tempo e contribuição!</p>
+  </div>
+
+    <!-- Pop-up de Simulado Indisponível -->
+  <div v-if="showSimuladoIndisponivelPopup" class="overlay"></div>
+  <div v-if="showSimuladoIndisponivelPopup" class="modalin no-select">
+    <h2>O segundo simulado ainda não está disponível.</h2>
+    <button @click="closeSimuladoIndisponivelPopup">Fechar</button>
+  </div>
 
     <div v-if="currentFlashcard" class="overlay"></div>
 
@@ -206,6 +222,7 @@ export default {
       primeiroflash: false,
       timeUntilNextFlashcardDisplay: 180,
       timerInterval: null,
+      showSimuladoIndisponivelPopup: false,
     };
   },
   computed: {
@@ -251,6 +268,12 @@ export default {
   },
 
   methods: {
+    indisponivelPopup() {
+      this.showSimuladoIndisponivelPopup = true;
+    },
+    closeSimuladoIndisponivelPopup() {
+      this.showSimuladoIndisponivelPopup = false;
+    },
     removeButtonFocus() {
       // Remove o foco de todos os botões da página
       const buttons = document.querySelectorAll('.option-button');
