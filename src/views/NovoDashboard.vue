@@ -156,7 +156,7 @@ import {
   calculateTimeDifference,
 } from './timeUtils.js';
 
-const API_URL = 'http://localhost:8080/api';
+const API_URL = 'http://3.19.208.176:8080/api';
 const MAX_FLASHCARDS = 90;
 
 export default {
