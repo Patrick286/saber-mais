@@ -63,7 +63,7 @@
     <!-- Pop-up do Simulado -->
 <div v-if="showSimulado" class="simulado-popup no-select">
   <div class="scontent">
-    <h1>Simulado</h1>
+    <h1>Questão {{ currentQuestionIndex + 1 }} de {{ questionsFromAPI.length }}</h1>
     <p v-for="(text, index) in getQuestionTexts" :key="index" class="question-textt">{{ text }}</p>
     <div class="options">
       <button v-for="(option, index) in currentQuestion.alternativas" :key="index" @click="submitAnswer(option)" class="option-button" @focus="removeButtonFocus">
@@ -156,7 +156,7 @@ import {
   calculateTimeDifference,
 } from './timeUtils.js';
 
-const API_URL = 'http://3.19.208.176:8080/api';
+const API_URL = 'http://localhost:8080/api';
 const MAX_FLASHCARDS = 90;
 
 export default {
