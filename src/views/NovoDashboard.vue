@@ -9,7 +9,7 @@
         <button @click="handleLogout">Sair</button>
         </div>
       </div>
-      <div class="content no-select">
+      <div class="content">
     <p>Flashcards:</p>
     <div class="cards-container no-select">
       <div class="cards" id="cards">
@@ -20,6 +20,9 @@
       </div>
     </div>
     <p>Próximo flashcard em: {{ timeUntilNextFlashcardDisplay  }} segundos.</p>
+    <h1>Com dúvidas? Fale com os desenvolvedores.</h1>
+    <h1>Patrick Miguel: 71985284031</h1>
+    <h1>Ronald Vieira: 71987010489</h1>
   </div>
     </body>
 
@@ -955,6 +958,14 @@ handleLogout() {
         font-weight: bold;
         color: #757e4a;
         margin-bottom: 40px;
+    }
+
+    .content h1 {
+        font-size: 1.0em;
+        font-weight: bold;
+        color: #757e4a;
+        margin-bottom: 5px;
+        margin: 5px;
     }
 
     .cards-container {
