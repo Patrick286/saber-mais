@@ -223,6 +223,8 @@ export default {
       timeUntilNextFlashcardDisplay: 180,
       timerInterval: null,
       showSimuladoIndisponivelPopup: false,
+      isCooldownActive: false, // Propriedade para verificar o cooldown
+      cooldownTime: 3000, // Tempo em milissegundos (1 segundo)
     };
   },
   computed: {
@@ -686,21 +688,37 @@ handleLogout() {
       }
     },
     submitAnswer(answer) {
-      this.userAnswers.push({
-        question: this.currentQuestion.enunciadoUm,
-        answer: answer,
-        correct: answer === this.currentQuestion.resposta,
-      });
-      if (answer === this.currentQuestion.resposta) {
-        this.correctAnswers++;
-      } else {
-        this.wrongAnswers++;
-      }
-      this.stopTimer();
-      this.currentQuestionIndex++;
-      this.removeButtonFocus();
-      this.loadNextQuestion();
-    },
+    // Verifica se o cooldown está ativo
+    if (this.isCooldownActive) {
+      return; // Impede a execução se o cooldown estiver ativo
+    }
+
+    // Ativa o cooldown para evitar cliques múltiplos
+    this.isCooldownActive = true;
+
+    // Desativa o cooldown após o tempo especificado
+    setTimeout(() => {
+      this.isCooldownActive = false;
+    }, this.cooldownTime);
+
+    // Lógica de envio da resposta
+    this.userAnswers.push({
+      question: this.currentQuestion.enunciadoUm,
+      answer: answer,
+      correct: answer === this.currentQuestion.resposta,
+    });
+
+    if (answer === this.currentQuestion.resposta) {
+      this.correctAnswers++;
+    } else {
+      this.wrongAnswers++;
+    }
+
+    this.stopTimer();
+    this.currentQuestionIndex++;
+    this.removeButtonFocus();
+    this.loadNextQuestion();
+  },
     async endSimulado() {
       // Calcula questões corretas e erradas
       this.correctAnswers = this.userAnswers.filter(answer => answer.correct).length;
