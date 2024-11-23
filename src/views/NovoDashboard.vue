@@ -800,13 +800,16 @@ handleLogout() {
         this.stopTimer();
     },
     closeSummary() {
-      this.showSummary = false;
-      this.loadNextFlashcard();
-      
-      setTimeout(() => {
-        this.primeiroflash = true;
-      }, 2000); // 2000 milissegundos = 2 segundos
-    },
+  this.showSummary = false;
+  
+  for (let i = 0; i < 10; i++) {
+    this.loadNextFlashcard();
+  }
+  
+  setTimeout(() => {
+    this.primeiroflash = true;
+  }, 2000); // 2000 milissegundos = 2 segundos
+},
     toggleAtividadesPopup() {
       this.showAtividades = !this.showAtividades;
       if (this.showAtividades) {
