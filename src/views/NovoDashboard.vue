@@ -19,7 +19,6 @@
         </div>
       </div>
     </div>
-    <p>Próximo flashcard em: {{ timeUntilNextFlashcardDisplay  }} segundos.</p>
     <h1>Com dúvidas? Fale com os desenvolvedores.</h1>
     <h1>Patrick Miguel: 71985284031</h1>
     <h1>Ronald Vieira: 71987010489</h1>
@@ -802,7 +801,7 @@ handleLogout() {
     closeSummary() {
   this.showSummary = false;
   
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 20; i++) {
     this.loadNextFlashcard();
   }
   
@@ -878,15 +877,32 @@ handleLogout() {
     console.error('Nenhum email de usuário encontrado no localStorage');
   }
 },
-    fetchQuestions() {
-      axios.get(`${API_URL}/questions`) // Faz a requisição GET para o endpoint
-        .then(response => {
-          this.questionsFromAPI = response.data; // Armazena as questões no estado
-        })
-        .catch(error => {
-          console.error('Erro ao buscar questões:', error);
-        });
-    },
+fetchQuestions() {
+  axios.get(`${API_URL}/questions`) // Faz a requisição GET para o endpoint
+    .then(response => {
+      const allQuestions = response.data; // Todas as questões
+      this.questionsFromAPI = this.getRandomQuestions(allQuestions, 10); // Seleciona 10 aleatórias
+    })
+    .catch(error => {
+      console.error('Erro ao buscar questões:', error);
+    });
+},
+
+getRandomQuestions(questions, count) {
+  // Embaralha as questões
+  const shuffled = questions.sort(() => 0.5 - Math.random());
+  // Retorna as primeiras `count` questões
+  return shuffled.slice(0, count);
+},
+//fetchQuestions() {
+//      axios.get(`${API_URL}/questions`) // Faz a requisição GET para o endpoint
+//        .then(response => {
+//          this.questionsFromAPI = response.data; // Armazena as questões no estado
+//        })
+//        .catch(error => {
+//          console.error('Erro ao buscar questões:', error);
+//        });
+//    },
   },
   created() {
     this.resetInactivityTimer();
