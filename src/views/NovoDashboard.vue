@@ -116,7 +116,7 @@
 <div v-if="showSummary" class="modal no-select">
     <h2>Resumo do Simulado</h2>
     <h1>{{ correctAnswers }}/{{ totalQuestions }}</h1>
-    <p>Muito bem! Você completou o simulado, agora podemos trabalhar juntos nos assuntos.</p>
+    <p>Muito bem! Você completou o simulado, agora podemos trabalhar juntos nos conteúdos abordados.</p>
     <p>Feche essa janela e comece a usar os <i>flashcards</i>!</p>
     <button @click="closeSummary">Fechar</button>
 </div>
